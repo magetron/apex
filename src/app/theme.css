@@ -1,0 +1,99 @@
+/* Engineering x-ray theme, dark (default) and light (:root[data-theme='light']).
+   Keep the canvas colours in src/scene/theme.ts (SCENE_THEMES) in sync with these. */
+:root {
+  color-scheme: dark;
+  --bg: #0a0e13;
+  --bg-solid: #111821;
+  --bg-elev: rgba(13, 19, 27, 0.8);
+  --bg-hover: rgba(127, 219, 255, 0.08);
+  --line: #1d2935;
+  --line-strong: #2c3e52;
+  --text: #e6edf3;
+  --text-muted: #93a1b1;
+  --text-faint: #5d6b7c;
+  --accent: #7fdbff;
+  --accent-strong: #4cc9f0;
+  --accent-ink: #052433;
+  --ok: #06d6a0;
+  --warn: #ffb703;
+  --danger: #ef476f;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --gap: 12px;
+  --topbar-h: 52px;
+  --gutter: 16px;
+
+  --label-bg: rgba(8, 12, 17, 0.88);
+  --topbar-bg: rgba(10, 14, 19, 0.82);
+  --card-bg: rgba(0, 0, 0, 0.25);
+  --well-bg: rgba(0, 0, 0, 0.3);
+
+  --font: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Code', Consolas, monospace;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #e8edf2;
+  --bg-solid: #ffffff;
+  --bg-elev: rgba(255, 255, 255, 0.84);
+  --bg-hover: rgba(11, 127, 179, 0.08);
+  --line: #d3dbe4;
+  --line-strong: #b4c1ce;
+  --text: #0f1720;
+  --text-muted: #46566a;
+  --text-faint: #768597;
+  --accent: #0b7fb3;
+  --accent-strong: #08668f;
+  --accent-ink: #ffffff;
+  --label-bg: rgba(255, 255, 255, 0.94);
+  --topbar-bg: rgba(255, 255, 255, 0.8);
+  --card-bg: rgba(255, 255, 255, 0.6);
+  --well-bg: rgba(15, 23, 32, 0.05);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+  margin: 0 0 0.4em;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

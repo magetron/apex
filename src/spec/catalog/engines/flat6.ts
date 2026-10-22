@@ -1,0 +1,30 @@
+import { flat, sound } from '../../builders';
+
+export default flat(6, {
+  id: 'flat6',
+  name: 'Flat-6 (boxer) twin-turbo',
+  layoutLabel: 'Horizontally opposed 6',
+  examples: ['Porsche 9A2 (992 Carrera)', 'Porsche 9A1 (991 GT3, NA)', 'Subaru EZ36'],
+  boreMm: 91,
+  strokeMm: 76.4,
+  rodMm: 127,
+  borePitchMm: 118,
+  numbering: 'bank-sequential',
+  firstBank: 'right',
+  firingOrder: [1, 6, 2, 4, 3, 5],
+  valvetrain: { type: 'dohc', valvesPerCyl: 4 },
+  induction: 'twin-turbo',
+  idleRpm: 750,
+  redlineRpm: 7500,
+  massKg: 210,
+  powerKw: 331,
+  torqueNm: 530,
+  geometry: { drySump: true },
+  sound: sound({
+    character: 'howl',
+    collector: 'per-bank',
+    turbo: { count: 2, spoolRpm: 2000, maxShaftKrpm: 190, bov: true, antiLag: false },
+  }),
+  notes: 'Flat and short: low centre of gravity, essentially fully balanced.',
+  source: '~ 9A2 Evo: bore/stroke Porsche; rod, pitch and mass estimated',
+});

@@ -1,0 +1,27 @@
+import { sound, vee } from '../../builders';
+
+export default vee(12, 60, {
+  id: 'v12',
+  name: 'V12',
+  layoutLabel: '60° V12',
+  examples: ['Lamborghini L539 (Aventador)', 'BMW N74 (760i)', 'Ferrari F140 (65°)'],
+  boreMm: 95,
+  strokeMm: 76.4,
+  rodMm: 140,
+  borePitchMm: 108,
+  numbering: 'bank-sequential',
+  firstBank: 'right',
+  pins: 'shared',
+  firingOrder: [1, 7, 4, 10, 2, 8, 6, 12, 3, 9, 5, 11],
+  valvetrain: { type: 'dohc', valvesPerCyl: 4 },
+  induction: 'na',
+  idleRpm: 900,
+  redlineRpm: 8500,
+  massKg: 235,
+  powerKw: 566,
+  torqueNm: 720,
+  geometry: { drySump: true },
+  sound: sound({ character: 'howl', collector: 'per-bank', headerMm: 540 }),
+  notes: 'Two perfectly balanced inline-6s: zero free forces or couples, a power stroke every 60°.',
+  source: '~ L539: bore/stroke Lamborghini; rod, pitch and mass estimated',
+});

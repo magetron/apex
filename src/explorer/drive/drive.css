@@ -1,0 +1,1170 @@
+/* Drive mode: the rail (left), the question and its live paths (top right), the timeline
+   (bottom), the cars' tags on the road, the picture the run ends on, touch controls. */
+
+/* ── the driver's inputs, as glyphs (tags, timeline, key) ─────────────────── */
+.apx-drive-hands {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 3px;
+  color: var(--text-muted);
+}
+.apx-drive-hands__wheel {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  color: var(--text);
+}
+.apx-drive-hands__wheel > span,
+.apx-drive-hands__wheel svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* catching a slide: the steering is the technique, so the wheel is drawn larger */
+.apx-drive-carlabel.is-steer .apx-drive-hands__wheel {
+  width: 22px;
+  height: 22px;
+}
+/* opposite lock: in the colour of the arrow on the front wheels */
+.apx-drive-hands__wheel.is-lock {
+  color: var(--steer);
+}
+/* a pedal: the brake wide, the gas narrow, filled as far as it is pressed (--fill, 0..1) */
+.apx-drive-pedal {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+}
+.apx-drive-pedal.is-gas {
+  width: 7px;
+  height: 14px;
+}
+.apx-drive-pedal.is-brake {
+  width: 11px;
+  height: 10px;
+}
+.apx-drive-pedal > i {
+  position: absolute;
+  inset: 0;
+  background: var(--sys, currentColor);
+  transform-origin: bottom;
+  transform: scaleY(var(--fill, 0));
+}
+/* a pedal never used (the speed-matched twin's brake): crossed out */
+.apx-drive-pedal.is-off::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -3px;
+  bottom: -3px;
+  width: 1.5px;
+  background: currentColor;
+  transform: rotate(45deg);
+}
+/* the foot lifted off: an arrow up in the empty pedal */
+.apx-drive-pedal__lift {
+  position: absolute;
+  inset: 1px 0;
+  width: 100%;
+  height: calc(100% - 2px);
+  display: none;
+  color: var(--text);
+}
+.apx-drive-pedal.is-lift .apx-drive-pedal__lift {
+  display: block;
+}
+/* an input as it changes: a ring that spreads from it */
+.apx-drive-pedal::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border: 2px solid var(--sys, var(--accent));
+  border-radius: 4px;
+  opacity: 0;
+  pointer-events: none;
+}
+.apx-drive-pedal.is-pulse::after {
+  animation: apx-drive-pulse 0.9s ease-out 2;
+}
+@keyframes apx-drive-pulse {
+  from {
+    opacity: 1;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.4);
+  }
+}
+
+/* ── the cars' tags on the road ─────────────────────────────────────────── */
+.apx-drive-carlabel {
+  gap: 6px;
+  padding: 4px 8px;
+}
+/* a leader to its own car instead of the stem, whichever side the tag is on */
+.apx-drive-carlabel::after {
+  display: none;
+}
+.apx-drive-carlabel__lead {
+  position: absolute;
+  height: 1.5px;
+  width: 0;
+  background: var(--sys);
+  opacity: 0.9;
+  transform-origin: 0 50%;
+  pointer-events: none;
+}
+.apx-drive-carlabel .apx-drive-hands {
+  padding-left: 6px;
+  border-left: 1px solid var(--line-strong);
+}
+.apx-drive-carlabel__kmh {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font: 600 11.5px/1 var(--mono);
+  color: var(--text);
+}
+/* braking into a turn beside the same car at its speed: the speeds linked, one copied */
+.apx-drive-chain {
+  width: 13px;
+  height: 13px;
+  color: var(--text-muted);
+}
+.apx-drive-carlabel.is-twin {
+  border-style: dashed;
+}
+/* catching a slide: through the key moment, the steering wheel large */
+.apx-drive-carlabel.is-big .apx-drive-hands__wheel {
+  width: 40px;
+  height: 40px;
+}
+.apx-drive-carlabel.is-big .apx-drive-hands {
+  align-items: center;
+}
+.apx-drive-carlabel__out {
+  font-weight: 750;
+  color: var(--text);
+}
+.apx-drive-carlabel__out.is-out {
+  color: var(--slide, var(--danger));
+}
+/* catching a slide, or caught: the recovery colour (the driver's correction), not alarm */
+.apx-drive-carlabel__out.is-caught {
+  color: var(--steer, var(--accent));
+}
+.apx-drive-carlabel [hidden] {
+  display: none;
+}
+
+/* ── the rail (bottom-left slot): cars, questions, who drives ────────────── */
+@media (min-width: 761px) {
+  .apx-slot-left > .apx-panel:has(> .apx-drive-rail) {
+    align-self: flex-start;
+    width: 236px;
+    padding: 10px;
+    max-height: calc(100vh - var(--topbar-h) - 2 * var(--gutter) - 52px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+}
+.apx-drive-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.apx-drive-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 4px;
+  align-items: stretch;
+}
+.apx-drive-chip {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--sys);
+  border-radius: var(--radius-sm);
+  background: var(--card-bg);
+  color: var(--text);
+  font: 650 12px/1.2 var(--font);
+  text-align: left;
+  cursor: pointer;
+}
+.apx-drive-chip:hover,
+.apx-drive-chip.is-b:focus-within {
+  border-color: var(--sys);
+}
+.apx-drive-chip:focus-visible,
+.apx-drive-chip__main:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.apx-drive-chip.is-b {
+  padding: 0 2px 0 0;
+  cursor: default;
+}
+.apx-drive-chip__main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 4px 0 4px 6px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.apx-drive-chip__tag {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--sys);
+  color: var(--bg-solid);
+  font: 800 10px/16px var(--font);
+  text-align: center;
+}
+.apx-drive-chip__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+/* B's other choices: a chevron over a see-through select */
+.apx-drive-chip__menu {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 24px;
+  border-radius: 4px;
+  color: var(--text-muted);
+}
+.apx-drive-chip__menu:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+.apx-drive-chip__menu select {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.apx-drive-swap {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.apx-drive-swap:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+.apx-drive-swap:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.apx-drive-swap:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* the questions, numbered */
+.apx-drive-qs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.apx-drive-qs button {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-muted);
+  font: 500 12px/1.3 var(--font);
+  text-align: left;
+  cursor: pointer;
+}
+.apx-drive-qs button:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+.apx-drive-qs button[aria-checked='true'] {
+  color: var(--text);
+  font-weight: 650;
+  background: var(--bg-hover);
+}
+.apx-drive-qs button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.apx-drive-qs__n {
+  flex: 0 0 10px;
+  font: 700 11px/1 var(--mono);
+  color: var(--text-faint);
+}
+.apx-drive-qs button[aria-checked='true'] .apx-drive-qs__n {
+  color: var(--accent);
+}
+.apx-drive-qs__q {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.apx-drive-select {
+  display: none;
+}
+.apx-drive-rail__foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+/* who drives: the test driver (watch) or you (a wheel) */
+.apx-drive-who {
+  display: inline-flex;
+  margin-right: auto;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.apx-drive-who button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  /* with the group's border, as tall as the key and gear buttons beside it */
+  height: 30px;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.apx-drive-who button + button {
+  border-left: 1px solid var(--line-strong);
+}
+.apx-drive-who button[aria-checked='true'] {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.apx-drive-who button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.apx-drive-who svg {
+  width: 17px;
+  height: 17px;
+}
+.apx-drive-iconbtn[aria-expanded='true'] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.apx-drive-extra {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.apx-drive-keys {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.apx-drive-keys kbd {
+  font: 600 11px/1 var(--mono);
+  color: var(--text-muted);
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 3px 4px;
+  min-width: 16px;
+  text-align: center;
+}
+@media (pointer: coarse) {
+  .apx-drive-keys {
+    display: none;
+  }
+}
+
+/* the key: each mark as drawn, one word each; floating beside the rail, so it moves nothing */
+.apx-drive-legend {
+  position: fixed;
+  z-index: 5;
+  padding: 10px 12px;
+  gap: 0;
+  width: 230px;
+}
+.apx-drive-legend ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 10px;
+}
+.apx-drive-legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.apx-drive-legend li > svg,
+.apx-drive-legend__glyph {
+  flex: 0 0 30px;
+  display: inline-flex;
+  justify-content: center;
+}
+.apx-drive-legend__glyph.apx-drive-hands__wheel {
+  flex-basis: 16px;
+  height: 16px;
+  margin: 0 7px;
+}
+.apx-drive-legend__glyph .apx-drive-chain {
+  width: 16px;
+  height: 16px;
+}
+
+/* the layout sketch: engine and motors in their colours, the centre of mass, driven wheels */
+.apx-drive-sketch {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 1px;
+  line-height: 1;
+}
+.apx-drive-sketch svg {
+  display: block;
+  overflow: visible;
+}
+.apx-drive-sketch__split {
+  text-align: center;
+  font: 600 10px/1 var(--mono);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.apx-drive-sketch__split small {
+  display: block;
+  font: 600 8.5px/1.1 var(--font);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  text-align: center;
+}
+.apx-drive-sketch__cg {
+  fill: var(--text);
+  stroke: var(--bg-solid);
+  stroke-width: 1;
+}
+
+/* ── the question and its live paths (top right) ─────────────────────────── */
+.apx-drive-info {
+  padding: 12px;
+  gap: 10px;
+}
+.apx-drive-title {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font: 650 16px/1.25 var(--font);
+  color: var(--text);
+  text-wrap: balance;
+}
+.apx-drive-title__n {
+  flex: 0 0 auto;
+  font: 700 13px/1 var(--mono);
+  color: var(--accent);
+}
+.apx-drive-inset {
+  border-radius: var(--radius-sm);
+  background: var(--well-bg);
+  overflow: hidden;
+}
+.apx-drive-inset svg {
+  display: block;
+}
+@media (min-width: 761px) {
+  .apx-dock--top-right:has(.apx-drive-info) {
+    max-height: calc(100% - 2 * var(--gutter));
+  }
+}
+
+/* ── the timeline (bottom centre) ───────────────────────────────────────── */
+.apx-drive-dash {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(520px, 100%);
+  padding: 8px 10px;
+}
+.apx-drive-car {
+  margin: -6px -8px 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+}
+.apx-drive-time {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.apx-drive-iconbtn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 7px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong);
+  background: var(--bg-solid);
+  color: var(--text);
+  font: 700 12px/1 var(--mono);
+  cursor: pointer;
+}
+.apx-drive-iconbtn:hover {
+  border-color: var(--accent);
+}
+.apx-drive-iconbtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.apx-drive-iconbtn svg {
+  width: 16px;
+  height: 16px;
+}
+.apx-drive-iconbtn.is-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+/* waiting at the key moment: play carries on */
+.apx-drive-iconbtn.is-cue {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  animation: apx-drive-cue 1.6s ease-in-out infinite;
+}
+@keyframes apx-drive-cue {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+  60% {
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 0%, transparent);
+  }
+}
+.apx-drive-scrub {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 36px;
+}
+.apx-drive-scrub input {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 20px;
+  width: 100%;
+  margin: 0;
+  accent-color: var(--accent);
+  background: transparent;
+  cursor: pointer;
+}
+/* what the timeline marks: the slowed stretch, what the driver does, where the run stops */
+.apx-drive-scrub__marks {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+.apx-drive-scrub__key {
+  position: absolute;
+  bottom: 7px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--accent);
+  opacity: 0.3;
+}
+.apx-drive-scrub__event {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  --sys: var(--text);
+}
+.apx-drive-scrub__event .apx-drive-pedal.is-gas {
+  height: 12px;
+}
+.apx-drive-scrub__pin {
+  position: absolute;
+  top: 3px;
+  width: 9px;
+  height: 9px;
+  margin-left: -4.5px;
+  background: var(--accent);
+  transform: translateX(12px) rotate(45deg);
+  border-radius: 1px;
+}
+/* a question that draws something larger than life on the cars: what, and how much */
+.apx-drive-shown {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font: 650 12px/1 var(--mono);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.apx-drive-shown svg {
+  width: 16px;
+  height: 16px;
+}
+/* the visitor's own wheel, pedals and speed while they drive */
+.apx-drive-driver {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+.apx-drive-hands.is-large {
+  gap: 6px;
+}
+.apx-drive-hands.is-large .apx-drive-hands__wheel {
+  width: 34px;
+  height: 34px;
+}
+.apx-drive-hands.is-large .apx-drive-pedal.is-gas {
+  width: 12px;
+  height: 30px;
+}
+.apx-drive-hands.is-large .apx-drive-pedal.is-brake {
+  width: 20px;
+  height: 22px;
+}
+.apx-drive-read {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font: 600 18px/1 var(--mono);
+  color: var(--text);
+}
+.apx-drive-read small {
+  font: 600 11px/1 var(--font);
+  color: var(--text-faint);
+}
+
+/* touch controls, while the visitor drives on a touch screen */
+.apx-drive-touch {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 10px);
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  pointer-events: none;
+  touch-action: none;
+  user-select: none;
+}
+.apx-drive-touch > div {
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+}
+.apx-drive-touch button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 56px;
+  border-radius: 14px;
+  border: 1px solid var(--line-strong);
+  background: var(--bg-elev);
+  backdrop-filter: blur(8px);
+  color: var(--text);
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.apx-drive-touch button.is-down {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+}
+.apx-drive-touch svg {
+  width: 24px;
+  height: 24px;
+}
+.apx-drive-touch .apx-drive-pedal {
+  transform: scale(1.6);
+}
+
+/* ── the picture the run ends on (and the live inset): both paths from above ── */
+.apx-drive-pic__svg {
+  display: block;
+}
+/* the ending: the question's card grows in place into it (the scene keeps the rest of the
+   view, the cars in sight beside it), never down past the bottom row */
+@media (min-width: 761px) {
+  .apx-dock--top-right:has(.apx-drive-info) {
+    transition: width 0.5s ease;
+  }
+  .apx-dock--top-right:has(.apx-drive-info.is-end) {
+    width: min(600px, 44vw);
+  }
+}
+.apx-drive-info__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.apx-drive-info__head .apx-drive-title {
+  flex: 1 1 auto;
+}
+.apx-drive-info__actions {
+  flex: 0 0 auto;
+  display: inline-flex;
+  gap: 6px;
+  animation: apx-drive-fade 0.5s ease-out;
+}
+.apx-drive-end {
+  border-radius: var(--radius-sm);
+  background: var(--well-bg);
+  overflow: hidden;
+  animation: apx-drive-fade 0.5s ease-out;
+}
+.apx-drive-end svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* (the room it has, measured: DriveInfo) */
+  max-height: var(--end-h, 60vh);
+}
+@keyframes apx-drive-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* every layout, the same test, over the timeline at the end: each its path alone, its car as
+   its layout sketch, in a row from front-engined to rear-engined */
+.apx-drive-every {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.apx-drive-every ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+}
+.apx-drive-every li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  border-radius: var(--radius-sm);
+  animation: apx-drive-fade 0.4s ease-out;
+}
+.apx-drive-every li.is-own {
+  background: var(--bg-hover);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+/* as wide as its picture, never wider (a name on one line widened its cell and pushed the row
+   past the timeline's edges): a long name takes a second line */
+.apx-drive-every__name {
+  align-self: stretch;
+  contain: inline-size;
+  padding: 0 4px;
+  font: 600 11px/1.15 var(--font);
+  color: var(--text-muted);
+  text-align: center;
+  text-wrap: balance;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+.apx-drive-every li.is-own .apx-drive-every__name {
+  color: var(--text);
+}
+/* the row's axis: where the engine sits, front → rear */
+.apx-drive-every__axis {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  font: 600 11px/1 var(--font);
+  color: var(--text-faint);
+}
+.apx-drive-every__axis > span:first-child {
+  color: var(--text-muted);
+}
+.apx-drive-every__axis i {
+  position: relative;
+  flex: 1 1 auto;
+  height: 1.5px;
+  background: currentColor;
+}
+.apx-drive-every__axis i::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: -3.5px;
+  border: 4.5px solid transparent;
+  border-left: 7px solid currentColor;
+  border-right: 0;
+}
+.apx-drive-dash.is-end {
+  max-width: 100%;
+}
+.apx-drive-pic__planned {
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+  opacity: 0.8;
+}
+.apx-drive-pic__svg.is-live .apx-drive-pic__planned {
+  stroke-dasharray: 4 3;
+  stroke-width: 1.2;
+}
+.apx-drive-pic__aimed {
+  fill: var(--text-muted);
+  font-size: 11px;
+}
+.apx-drive-pic__arrow {
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.apx-drive-pic__line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.apx-drive-pic__svg.is-live .apx-drive-pic__line {
+  stroke-width: 2.2px;
+}
+.apx-drive-pic__ref {
+  fill: none;
+  stroke: var(--sys);
+  stroke-width: 2;
+  stroke-dasharray: 2 4;
+  stroke-linecap: round;
+  opacity: 0.6;
+}
+.apx-drive-pic__name {
+  font-size: 12.5px;
+  font-weight: 650;
+  paint-order: stroke;
+  stroke: var(--bg-solid);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.apx-drive-pic__word {
+  font-size: 14px;
+  font-weight: 750;
+}
+.apx-drive-pic__word.is-out {
+  fill: var(--slide, var(--danger));
+}
+.apx-drive-pic__word.is-caught {
+  fill: var(--steer, var(--accent));
+}
+.apx-drive-pic__event path {
+  stroke: var(--text);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.apx-drive-pic__event text {
+  fill: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+.apx-drive-pic__spot {
+  fill: none;
+  stroke: var(--slide, var(--danger));
+  stroke-width: 2.5;
+}
+.apx-drive-pic__scale path {
+  stroke: var(--text-muted);
+  stroke-width: 1.5;
+  fill: none;
+}
+.apx-drive-pic__scale path.is-side {
+  stroke: var(--text);
+  stroke-width: 2;
+}
+.apx-drive-pic__scale text {
+  fill: var(--text-muted);
+  font: 600 10.5px/1 var(--mono);
+}
+/* the picture inside a card (the dev sandbox) */
+.apx-drive-pic.is-inline {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .apx-drive-end,
+  .apx-drive-info__actions,
+  .apx-drive-every li,
+  .apx-drive-pedal.is-pulse::after,
+  .apx-drive-iconbtn.is-cue {
+    animation: none;
+  }
+}
+
+/* ── a small desktop window (the app's side pane, ~800 px): the questions as a menu, so the
+   road between the panels stays wide enough for both cars ── */
+@media (min-width: 761px) and (max-width: 1080px) {
+  .apx-overlay:has(.apx-drive-rail) {
+    --side: 244px;
+  }
+  .apx-drive-qs {
+    display: none;
+  }
+  .apx-drive-select {
+    display: block;
+  }
+  .apx-dock--bottom > .apx-slot-left:has(.apx-drive-rail) {
+    min-width: 0;
+  }
+}
+
+/* ── phones ─────────────────────────────────────────────────────────────── */
+@media (max-width: 760px) {
+  /* the question and its paths go to the top, where the HUD leaves room */
+  .apx-dock--top-right:has(.apx-drive-info) {
+    top: calc(var(--gutter) + 44px);
+    bottom: auto;
+    max-height: 26vh;
+  }
+  .apx-drive-info {
+    flex-direction: row;
+    align-items: center;
+  }
+  .apx-drive-title {
+    font-size: 14px;
+  }
+  .apx-drive-inset {
+    flex: 0 0 auto;
+    max-width: 50%;
+  }
+  .apx-drive-inset svg {
+    width: 100%;
+    height: auto;
+  }
+  .apx-drive-qs {
+    display: none;
+  }
+  .apx-drive-select {
+    display: block;
+  }
+  .apx-drive-dash {
+    width: 100%;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+}
+
+/* ── the #/dev/drive sandbox: each car's word per stop, and the words in sight per moment ── */
+.apx-dev-cars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+}
+.apx-dev-cars li {
+  display: flex;
+  gap: 8px;
+  padding-left: 6px;
+  border-left: 3px solid var(--sys);
+}
+.apx-dev-cars span {
+  color: var(--text-muted);
+}
+.apx-dev-words {
+  border-collapse: collapse;
+  font-size: 11.5px;
+}
+.apx-dev-words th,
+.apx-dev-words td {
+  padding: 2px 6px 2px 0;
+  text-align: left;
+  vertical-align: top;
+}
+.apx-dev-words th {
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.apx-dev-words td:nth-child(2) {
+  font: 700 11.5px/1.3 var(--mono);
+}
+.apx-dev-words td:last-child {
+  color: var(--text-muted);
+}
+.apx-dev-words tr.is-over td:nth-child(2) {
+  color: var(--danger);
+}
+
+/* ── car B, when it is car A itself changed: a dashed ghost of car A, what it leaves out crossed
+   out beside it (its chip and its tag); a new car B comes in so the change is seen ── */
+.apx-drive-chip.is-twin {
+  border-style: dashed;
+}
+.apx-drive-chip.is-twin .apx-drive-sketch rect:first-of-type {
+  stroke-dasharray: 2.5 2;
+  fill-opacity: 0.04;
+}
+.apx-drive-chip__leaves,
+.apx-drive-carlabel__leaves {
+  flex: 0 0 auto;
+  display: inline-flex;
+  color: var(--text-muted);
+}
+.apx-drive-chip.is-b {
+  animation: apx-drive-chip-in 0.8s ease-out;
+}
+@keyframes apx-drive-chip-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  35% {
+    opacity: 1;
+    transform: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--sys) 70%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 3px transparent;
+  }
+}
+/* a steering wheel never used (car B without the catch): crossed out */
+.apx-drive-hands__wheel.is-off {
+  position: relative;
+  opacity: 0.75;
+}
+.apx-drive-hands__wheel.is-off::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  bottom: -2px;
+  width: 1.5px;
+  background: currentColor;
+  transform: rotate(45deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .apx-drive-chip.is-b {
+    animation: none;
+  }
+}
+.apx-drive-legend__glyph .apx-drive-magnifier {
+  width: 16px;
+  height: 16px;
+}
+
+/* the driver's action, popped over its car at its moment: one large glyph, then it fades */
+.apx-drive-act {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text);
+}
+.apx-drive-act[hidden] {
+  display: none;
+}
+.apx-drive-carlabel .apx-drive-act .apx-drive-hands {
+  padding: 0;
+  border: 0;
+  color: var(--text);
+}
+.apx-drive-act .apx-drive-pedal {
+  border-width: 2px;
+}
+.apx-drive-act .apx-drive-pedal.is-gas {
+  width: 13px;
+  height: 26px;
+}
+.apx-drive-act .apx-drive-pedal.is-brake {
+  width: 22px;
+  height: 18px;
+}
+.apx-drive-act .apx-drive-hands__wheel {
+  width: 36px;
+  height: 36px;
+}
+/* opposite lock: the wheel in the correction's colour */
+.apx-drive-act.is-lock .apx-drive-hands__wheel {
+  color: var(--steer);
+}
+.apx-drive-act.is-pop {
+  animation: apx-drive-act-in 0.45s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+@keyframes apx-drive-act-in {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .apx-drive-act.is-pop {
+    animation: none;
+  }
+}

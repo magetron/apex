@@ -1,0 +1,166 @@
+/* AWD explainer (AwdPanel.tsx). Front/rear series colours are a validated categorical pair
+   (blue/orange, checked against both themes' surfaces); the 3D arrows use the same two. */
+:root {
+  --awd-front: #3987e5;
+  --awd-rear: #d95926;
+}
+:root[data-theme='light'] {
+  --awd-front: #2a78d6;
+  --awd-rear: #eb6834;
+}
+
+.awd-ctl {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.awd-ctl__ends {
+  display: flex;
+  justify-content: space-between;
+  margin-top: -2px;
+}
+/* (a 24 px target round each word, in the same place: the padding is taken back by the margin) */
+.awd-ctl__ends button {
+  font: 500 11px/1.2 var(--font);
+  color: var(--text-faint);
+  background: none;
+  border: 0;
+  padding: 6px 4px;
+  margin: -4px -4px;
+  cursor: pointer;
+}
+.awd-ctl__ends button:hover {
+  color: var(--text);
+}
+.awd-ctl__ends button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.awd-readout {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.awd-bars {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 5px;
+}
+.awd-bar {
+  display: contents;
+}
+.awd-bar__label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.awd-bar__track {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--well-bg);
+  border: 1px solid var(--line);
+}
+.awd-bar__track > i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: var(--bar, var(--text-faint));
+}
+.awd-bar__track > b {
+  /* the nominal split */
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--text);
+  opacity: 0.55;
+}
+.awd-bar__value {
+  font: 600 12px/1 var(--mono);
+  color: var(--text);
+  text-align: right;
+  min-width: 3.4em;
+}
+.awd-bar__value small {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.awd-bar__spin {
+  font: 600 11px/1 var(--font);
+  color: var(--danger);
+  min-width: 3.6em;
+}
+.awd-bar--f {
+  --bar: var(--awd-front);
+}
+.awd-bar--r {
+  --bar: var(--awd-rear);
+}
+.awd-bar--total {
+  --bar: var(--text-muted);
+}
+.awd-bar--bind {
+  --bar: var(--danger);
+}
+.awd-bar.is-spin .awd-bar__track {
+  border-color: var(--danger);
+}
+
+.awd-plot {
+  width: 100%;
+  height: auto;
+  display: block;
+  cursor: crosshair;
+  touch-action: none;
+}
+.awd-plot__axis {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+.awd-plot__grid {
+  stroke: var(--line);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+.awd-plot__line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.awd-plot__line--f {
+  stroke: var(--awd-front);
+}
+.awd-plot__line--r {
+  stroke: var(--awd-rear);
+}
+.awd-plot__cursor {
+  stroke: var(--text);
+  stroke-width: 1;
+  opacity: 0.5;
+}
+.awd-plot__end {
+  font: 700 10px/1 var(--mono);
+  fill: var(--text);
+}
+.awd-plot__tick {
+  font: 500 9px/1 var(--mono);
+  fill: var(--text-faint);
+}
+
+/* #/dev/awd: the readout for several cars side by side */
+.awd-dev {
+  position: absolute;
+  inset: calc(var(--topbar-h) + var(--gutter)) var(--gutter) var(--gutter);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  align-content: start;
+  gap: var(--gap);
+  overflow-y: auto;
+}

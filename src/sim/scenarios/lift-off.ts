@@ -1,0 +1,59 @@
+/**
+ * Lift-off mid-corner (ISO 9816): settle on a circle, then snap the throttle shut with the
+ * steering held still for 2 s. Load moves forward, the rear tyres lose grip and engine
+ * braking eats into what's left: a tail-heavy car's yaw rate spikes.
+ */
+import { cornerPlan, cornerResult, LINE_M, withoutTechnique, type CornerSpec } from './corner';
+import type { ScenarioDef, ScenarioResult } from './types';
+
+export const LIFT_HOLD_S = 2;
+
+const SPEC: CornerSpec = {
+  id: 'lift-off',
+  radius: 40,
+  arcDeg: 170,
+  eventDeg: 70,
+  exit: 100,
+  event: 'Lift',
+  holdS: LIFT_HOLD_S,
+  headline: 'yawSpike',
+  pedals(_c, _p, _st, u) {
+    u.throttle = 0;
+    u.brake = 0;
+  },
+};
+
+export const liftOff: ScenarioDef = {
+  id: 'lift-off',
+  question: 'What if you lift mid-corner?',
+  label: 'Lift-off',
+  short: 'Lift',
+  title: 'Throttle snapped shut mid-corner, steering held',
+  // 64 km/h is 89% of the reference car's grip: there the tail-heavy 911s and the mid-engined
+  // 718 let go on a lift while front-engined, AWD and front-driven cars tighten, under either
+  // engine-braking estimate (the ranking is robust; a single car's verdict a km/h lower isn't)
+  speed: { min: 40, max: 75, def: 64, label: 'Corner speed' },
+  headline: 'yawSpike',
+  // the rear lets go about a second after the lift
+  key: { at: 'event', before: 0.3, after: 1.5 },
+  holdS: LIFT_HOLD_S,
+  event: 'Lift',
+  radius: SPEC.radius,
+  plan: (kmh) => cornerPlan(SPEC, kmh),
+  baseline: { label: 'No lift', plan: (kmh) => cornerPlan(withoutTechnique(SPEC), kmh) },
+  verdict: liftVerdict,
+};
+
+export const liftOffResult = (tr: Parameters<typeof cornerResult>[0]): ScenarioResult =>
+  cornerResult(tr, LIFT_HOLD_S, 'yawSpike');
+
+/** The tail swinging out (or round) is the story here; a car that only tightens turns in,
+ *  judged by where its line ended against the one the driver aimed for. */
+export function liftVerdict(r: ScenarioResult) {
+  const { exitErr = 0, slipChange = 0 } = r.values;
+  if (r.spun) return 'spin' as const;
+  if (slipChange > 2) return 'tail' as const;
+  if (exitErr >= LINE_M) return 'tight' as const;
+  if (exitErr <= -LINE_M) return 'wide' as const;
+  return 'neutral' as const;
+}

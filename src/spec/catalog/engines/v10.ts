@@ -1,0 +1,27 @@
+import { sound, vee } from '../../builders';
+
+export default vee(10, 90, {
+  id: 'v10',
+  name: 'V10',
+  layoutLabel: '90° V10, split pins (even fire)',
+  examples: ['Audi/Lamborghini 5.2 FSI (R8, Huracán)', 'Lexus 1LR-GUE (LFA, 72°)'],
+  boreMm: 84.5,
+  strokeMm: 92.8,
+  rodMm: 154,
+  borePitchMm: 90,
+  numbering: 'bank-sequential',
+  firstBank: 'right',
+  pins: 'split',
+  firingOrder: [1, 6, 5, 10, 2, 7, 3, 8, 4, 9],
+  valvetrain: { type: 'dohc', valvesPerCyl: 4 },
+  induction: 'na',
+  idleRpm: 900,
+  redlineRpm: 8700,
+  massKg: 230,
+  powerKw: 456,
+  torqueNm: 580,
+  geometry: { drySump: true },
+  sound: sound({ character: 'howl', collector: 'per-bank', headerMm: 560 }),
+  notes: 'A 90° vee wants 72° for even firing, so paired crank pins are split by 18°.',
+  source: '~ 5.2 FSI: bore/stroke/pitch Audi; rod and mass estimated',
+});

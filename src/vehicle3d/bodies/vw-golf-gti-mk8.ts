@@ -1,0 +1,166 @@
+/**
+ * VW Golf GTI (Mk8): the default hatchback. Short bonnet, long flat roof ending in a spoiler,
+ * the thick forward-raked C-pillar, a strong horizontal shoulder line, slim headlamps joined
+ * by an LED strip across the nose (with the GTI red pinstripe) and a big honeycomb lower grille.
+ */
+import { dlo, poly, roundRect, slant } from '../shell/decals';
+import type { BodyTuning } from '../shell/types';
+
+const tune: BodyTuning = () => ({
+  top: [
+    [880, 470],
+    [870, 565],
+    [845, 655],
+    [800, 722],
+    [740, 765],
+    [500, 832],
+    [100, 905],
+    [-170, 950],
+    [-450, 1118],
+    [-800, 1350],
+    [-1000, 1440],
+    [-1500, 1463],
+    [-2200, 1455],
+    [-2520, 1432],
+    [-2640, 1420],
+    [-2710, 1396],
+    [-3050, 1162],
+    [-3200, 1102],
+    [-3330, 1000],
+    [-3392, 830],
+    [-3407, 620],
+  ],
+  belt: [
+    [880, 460],
+    [842, 690],
+    [600, 800],
+    [200, 880],
+    [-170, 948],
+    [-1000, 988],
+    [-2000, 1018],
+    [-2700, 1048],
+    [-3150, 1078],
+    [-3330, 995],
+    [-3407, 620],
+  ],
+  bottom: [
+    [880, 330],
+    [840, 235],
+    [760, 185],
+    [400, 135],
+    [-2900, 140],
+    [-3150, 250],
+    [-3407, 360],
+  ],
+  plan: [
+    [880, 0.93],
+    [300, 0.975],
+    [0, 0.985],
+    [-1300, 0.985],
+    [-2631, 1],
+    [-3407, 0.96],
+  ],
+  nose: { len: 380, p: 2.4 },
+  tail: { len: 230, p: 2.8 },
+  cabin: [-3060, -150],
+  roofHalf: 0.8,
+  crown: 45,
+  topExp: 2.4,
+  tuck: 45,
+  tuckUnder: 28,
+  shoulder: 0.68,
+  beltCrease: true,
+  flare: [15, 20],
+  flareTop: 0.2,
+  archGap: 38,
+  lip: 10,
+  mirrors: { x: -330, dy: 78, mat: 'paint' },
+  exhaust: [
+    { z: -600, y: 300, r: 40 },
+    { z: 600, y: 300, r: 40 },
+  ],
+  accent: '#e4002b',
+  decals: (s, d) => {
+    const keep = d.filter((x) => ['windscreen', 'rear-window', 'b-pillar'].includes(x.tag ?? ''));
+    return [
+      ...keep,
+      // DLO ends early at the roof: the C-pillar rakes forward
+      {
+        tag: 'dlo',
+        view: 'side',
+        ...dlo(s, { rear: -2470, rearTop: -2230 }),
+        mat: 'glass',
+        mirror: true,
+        offset: 4,
+        nv: 4,
+      },
+      {
+        tag: 'headlight',
+        view: 'front',
+        ...slant(roundRect(390, 830, 690, 770, 28), 0.08),
+        mat: 'lamp',
+        mirror: true,
+        offset: 5,
+      },
+      {
+        tag: 'drl-strip',
+        view: 'front',
+        ...roundRect(-390, 390, 742, 752, 4),
+        mat: 'drl',
+        offset: 6,
+        nv: 2,
+      },
+      {
+        tag: 'grille',
+        view: 'front',
+        ...roundRect(-390, 390, 668, 742, 12),
+        mat: 'grille',
+        offset: 4,
+      },
+      {
+        tag: 'gti-stripe',
+        view: 'front',
+        ...roundRect(-390, 390, 700, 708, 3),
+        mat: 'accent',
+        offset: 6,
+        nv: 2,
+        outline: false,
+      },
+      {
+        tag: 'intake',
+        view: 'front',
+        ...poly(
+          [
+            [-580, 540],
+            [580, 540],
+          ],
+          [
+            [-580, 540],
+            [-430, 300],
+            [430, 300],
+            [580, 540],
+          ],
+        ),
+        mat: 'grille',
+        offset: 3,
+      },
+      {
+        tag: 'taillight',
+        view: 'rear',
+        ...slant(roundRect(250, 830, 975, 1055, 26), 0.07),
+        mat: 'lampRed',
+        mirror: true,
+        offset: 5,
+      },
+      {
+        tag: 'diffuser',
+        view: 'rear',
+        ...roundRect(-700, 700, 300, 440, 22),
+        mat: 'black',
+        offset: 3,
+      },
+    ];
+  },
+});
+
+export default tune;

@@ -1,0 +1,780 @@
+/* Hot lap: circuit cards, timing board, traces, mini-map, labels in the 3D view. */
+
+/* ── circuit cards ───────────────────────────────────────── */
+.apx-trk-picker {
+  width: min(860px, calc(100vw - 2 * var(--gutter)));
+}
+.apx-trk-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+.apx-trk-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'map map'
+    'name time'
+    'facts time';
+  align-items: end;
+  gap: 2px 8px;
+  padding: 10px 12px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--card-bg);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.apx-trk-card:hover,
+.apx-trk-card:focus-visible {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+  outline: none;
+}
+.apx-trk-card__map {
+  grid-area: map;
+  width: 100%;
+  height: 104px;
+  margin-bottom: 6px;
+}
+.apx-trk-card__name {
+  grid-area: name;
+  font-weight: 600;
+}
+.apx-trk-card__facts {
+  grid-area: facts;
+  display: flex;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.apx-trk-card__time {
+  grid-area: time;
+  align-self: end;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.apx-trk-outline {
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+.apx-trk-outline.is-under {
+  stroke: var(--line-strong);
+  stroke-width: 5;
+}
+.apx-trk-sectorline {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+.apx-trk-startdot {
+  fill: var(--text);
+  stroke: var(--bg-solid);
+  stroke-width: 1.5;
+}
+.apx-trk-dot {
+  stroke: var(--bg-solid);
+  stroke-width: 2;
+}
+
+/* ── info card: board and split ───────────────────────────── */
+.apx-trk-info .apx-chips {
+  margin-bottom: 8px;
+}
+.apx-trk-key {
+  display: inline-block;
+  width: 12px;
+  height: 3px;
+  margin-right: 6px;
+  border-radius: 2px;
+  background: var(--c);
+  vertical-align: middle;
+}
+.apx-trk-times {
+  font-size: 13px;
+}
+.apx-trk-times ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.apx-trk-times li {
+  padding: 4px 0 5px;
+  border-bottom: 1px solid var(--line);
+}
+.apx-trk-times__row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 6px;
+}
+/* sectors and the traction-limited time, under the column heads said once at the top */
+.apx-trk-times__cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) 1.25fr;
+  gap: 6px;
+  padding-left: 32px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.apx-trk-times__cols.is-head {
+  padding-bottom: 2px;
+  font-family: var(--font);
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.apx-trk-times__cols.is-head span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.apx-trk-times__cols .is-sector-best {
+  justify-self: start;
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: inset 0 -2px 0 var(--c);
+}
+/* the traction strip's own look, as under the speed trace */
+.apx-trk-swatch {
+  width: 10px;
+  height: 5px;
+  border-radius: 1px;
+  background: var(--text-muted);
+}
+/* each car's driven wheels from above, in its colour */
+.apx-trk-wheels {
+  width: 26px;
+  height: 15px;
+  overflow: visible;
+}
+.apx-trk-wheels__body {
+  fill: none;
+  stroke: var(--c);
+  stroke-width: 1.1;
+  opacity: 0.75;
+}
+.apx-trk-wheels rect {
+  fill: var(--bg-solid);
+  stroke: var(--text-faint);
+  stroke-width: 1;
+}
+.apx-trk-wheels .is-driven rect {
+  fill: var(--c);
+  stroke: var(--c);
+}
+.apx-trk-wheels__axle {
+  stroke: var(--c);
+  stroke-width: 1.4;
+}
+/* a long name takes a second line rather than lose its end */
+.apx-trk-times__name {
+  min-width: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+.apx-trk-times small {
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.apx-trk-times b {
+  font-family: var(--mono);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.apx-trk-times li.is-best b {
+  color: var(--text);
+}
+.apx-trk-board {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.apx-trk-board th,
+.apx-trk-board td {
+  padding: 3px 4px;
+  text-align: right;
+  white-space: nowrap;
+}
+.apx-trk-board thead th {
+  color: var(--text-faint);
+  font-weight: 500;
+}
+.apx-trk-board tbody th {
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+  font-weight: 500;
+}
+.apx-trk-board td b {
+  display: block;
+  font-family: var(--mono);
+  font-weight: 600;
+}
+.apx-trk-board td small {
+  display: block;
+  color: var(--text-muted);
+  font-family: var(--mono);
+}
+.apx-trk-board td {
+  font-family: var(--mono);
+  color: var(--text-muted);
+  vertical-align: top;
+}
+.apx-trk-board td.is-sector-best {
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: inset 0 -2px 0 var(--c);
+}
+.apx-trk-board tr.is-best td b {
+  color: var(--text);
+}
+
+.apx-trk-split {
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  column-gap: 6px;
+  row-gap: 1px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.apx-trk-split__car {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+}
+.apx-trk-split .apx-trk-key {
+  margin: 0;
+}
+/* the pieces on one time scale: each a flex-basis share of the slowest lap */
+.apx-trk-split__icons,
+.apx-trk-split__bar,
+.apx-trk-split__nums {
+  display: flex;
+  min-width: 0;
+}
+.apx-trk-split__icons {
+  color: var(--text-muted);
+}
+.apx-trk-split__icons > span,
+.apx-trk-split__nums > span {
+  flex-grow: 0;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+}
+.apx-trk-split__bar {
+  height: 10px;
+}
+.apx-trk-split__bar > span {
+  flex-grow: 0;
+  flex-shrink: 0;
+  background: var(--c);
+  box-shadow: inset -1px 0 0 var(--bg-solid);
+}
+.apx-trk-split__bar > span:first-child {
+  border-radius: 2px 0 0 2px;
+}
+.apx-trk-split__bar > span:last-child {
+  border-radius: 0 2px 2px 0;
+}
+.apx-trk-split__bar .is-straight {
+  opacity: 0.6;
+}
+.apx-trk-split__bar .is-brake {
+  opacity: 0.32;
+}
+.apx-trk-split__nums {
+  margin-bottom: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* small line icons: the kinds of road, the playback buttons */
+.apx-trk-icon {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.apx-trk-icon .is-fill {
+  fill: currentColor;
+  stroke: none;
+}
+.apx-trk-icon .is-thick {
+  stroke-width: 2.4;
+}
+.apx-trk-turns {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.apx-trk-turns .apx-trk-icon {
+  width: 12px;
+  height: 12px;
+  color: var(--text-muted);
+}
+
+/* ── hub ───────────────────────────────────────────────────── */
+.apx-trk-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.apx-trk-controls__row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.apx-trk-live {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.apx-trk-live__clock {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 600;
+  min-width: 96px;
+}
+.apx-trk-live.is-wait {
+  opacity: 0.4;
+  animation: apx-trk-pulse 1.2s ease-in-out infinite alternate;
+}
+.apx-trk-live b {
+  font-family: var(--mono);
+  font-size: 16px;
+}
+.apx-trk-live small {
+  margin-left: 3px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+/* ── traces ────────────────────────────────────────────────── */
+.apx-trk-dash {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap);
+  width: min(820px, 100%);
+}
+.apx-trk-dash > * {
+  pointer-events: auto;
+}
+.apx-trk-dash__charts {
+  width: 100%;
+  padding: 8px 10px 4px;
+  /* solid: the road and the racing line must not show through the traces */
+  background: var(--bg-solid);
+  backdrop-filter: none;
+}
+.apx-trk-charts {
+  position: relative;
+  width: 100%;
+}
+.apx-trk-charts svg {
+  display: block;
+  cursor: crosshair;
+}
+.apx-trk-grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.apx-trk-zero {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+.apx-trk-sector {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+.apx-trk-tick,
+.apx-trk-unit,
+.apx-trk-end,
+.apx-trk-corner-tick {
+  fill: var(--text-muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.apx-trk-unit {
+  fill: var(--text-faint);
+}
+.apx-trk-end {
+  font-family: var(--mono);
+}
+.apx-trk-corner-tick {
+  fill: var(--text-faint);
+}
+.apx-trk-trace {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.apx-trk-head {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+.apx-trk-cross {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+}
+/* (on the cursor's roomier side, Charts.tsx: never wider than that half; a long name wraps) */
+.apx-trk-tip {
+  position: absolute;
+  min-width: 150px;
+  max-width: calc(50% - 10px);
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-solid);
+  font-size: 11px;
+  pointer-events: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+.apx-trk-tip__at {
+  margin-bottom: 3px;
+  color: var(--text-faint);
+}
+.apx-trk-tip__row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.apx-trk-tip__row i {
+  width: 10px;
+  height: 2px;
+  border-radius: 1px;
+}
+.apx-trk-tip__row b {
+  font-family: var(--mono);
+  color: var(--text);
+}
+.apx-trk-tip__row span {
+  color: var(--text-muted);
+}
+.apx-trk-tip__name {
+  min-width: 0;
+  margin-left: auto;
+  padding-left: 8px;
+}
+
+/* ── mini-map ──────────────────────────────────────────────── */
+.apx-trk-mini {
+  width: 200px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+  backdrop-filter: blur(8px);
+}
+.apx-trk-mini svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 170px;
+}
+
+/* ── labels in the 3D view ─────────────────────────────────── */
+.apx-trk-corner {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--label-bg);
+  color: var(--text-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.apx-trk-tags {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.apx-trk-tags .apx-trk-tag {
+  position: absolute;
+  left: 0;
+  top: 0;
+  visibility: hidden;
+  transform: none;
+}
+.apx-trk-tag b {
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.apx-trk-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--label-bg);
+  color: var(--text);
+  font-size: 11px;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+.apx-trk-tag i {
+  width: 10px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--c);
+}
+.apx-trk-tag.is-map {
+  transform: translate(58%, -120%);
+}
+
+/* ── limits, moments, the finish ────────────────────────── */
+/* the laps being driven: three pulsing dots */
+.apx-trk-wait {
+  display: inline-flex;
+  gap: 4px;
+  margin: 6px 0;
+}
+.apx-trk-wait i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: apx-trk-pulse 0.9s ease-in-out infinite alternate;
+}
+.apx-trk-wait i:nth-child(2) {
+  animation-delay: 0.3s;
+}
+.apx-trk-wait i:nth-child(3) {
+  animation-delay: 0.6s;
+}
+@keyframes apx-trk-pulse {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .apx-trk-wait i,
+  .apx-trk-live.is-wait {
+    animation: none;
+  }
+}
+/* share of the lap on full power: one 0-100% scale on every card */
+.apx-trk-card__power {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.apx-trk-card__power b {
+  min-width: 30px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.apx-trk-power {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--well-bg);
+  box-shadow: inset 0 0 0 1px var(--line);
+  overflow: hidden;
+}
+.apx-trk-power > span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--accent);
+}
+.apx-trk-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.apx-trk-legend i {
+  width: 18px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--accent);
+}
+.apx-trk-order {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+}
+.apx-trk-order li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 4px;
+}
+.apx-trk-order b {
+  font-family: var(--mono);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+.apx-trk-result {
+  width: min(380px, calc(100vw - 2 * var(--gutter)));
+}
+.apx-trk-result .apx-panel__head {
+  align-items: center;
+}
+.apx-trk-result .apx-panel__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.apx-trk-result .apx-btn {
+  padding: 6px 10px;
+}
+.apx-trk-flag {
+  width: 16px;
+  height: 12px;
+  fill: var(--text);
+}
+.apx-trk-flag .is-frame {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1;
+}
+/* place, key, name, gap, time: one grid, so the gaps and times line up down the card and a long
+   name takes a second line (in a fixed 170 px it lost its end) */
+.apx-trk-result ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: place;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+  column-gap: 8px;
+}
+.apx-trk-result li {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: baseline;
+  padding: 3px 0;
+  counter-increment: place;
+}
+.apx-trk-result li::before {
+  content: counter(place) '.';
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+/* the key on the name's first line */
+.apx-trk-result li > .apx-trk-key {
+  align-self: start;
+  margin: calc(0.75em - 1.5px) 0 0;
+}
+.apx-trk-result__name {
+  min-width: 0;
+}
+.apx-trk-result small {
+  font-family: var(--mono);
+  color: var(--text-muted);
+  text-align: right;
+}
+.apx-trk-result b {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.apx-trk-traction {
+  fill: none;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+.apx-trk-mini__key {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 2px 0;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.apx-trk-mini__band {
+  width: 14px;
+  height: 0;
+  border-top: 2.6px solid var(--text-muted);
+}
+.apx-trk-strip {
+  fill: var(--well-bg);
+}
+.apx-trk-strip__on {
+  fill: currentColor;
+}
+.apx-trk-moment-band {
+  fill: currentColor;
+  opacity: 0.08;
+}
+.apx-trk-moment-tag {
+  fill: var(--bg-solid);
+  stroke: currentColor;
+  stroke-width: 1.2;
+}
+.apx-trk-moment-text {
+  fill: var(--text);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+}
+.apx-trk-tip__limit {
+  min-width: 46px;
+}
+.apx-trk-moment {
+  display: inline-flex;
+  padding: 2px 7px 3px;
+  border-left: 3px solid var(--c);
+  border-radius: 4px;
+  background: var(--label-bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+/* the result card: high in the middle, clear of the traces at the bottom */
+.apx-trk-result-dock {
+  position: absolute;
+  top: calc(var(--gutter) + 56px);
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: auto;
+}

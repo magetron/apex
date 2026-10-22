@@ -1,0 +1,112 @@
+/* Sound controls. Theme tokens only, so dark and light both work. */
+.apx-snd {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.apx-snd__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.apx-snd__gap {
+  flex: 0 0 4px;
+}
+.apx-snd__btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-solid);
+  color: var(--text);
+  cursor: pointer;
+}
+.apx-snd__btn:hover {
+  border-color: var(--accent);
+}
+.apx-snd__btn svg {
+  width: 16px;
+  height: 16px;
+}
+.apx-snd__btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+.apx-snd__btn[aria-pressed='true'],
+.apx-snd__btn.is-active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.apx-snd__vol {
+  flex: 1 1 60px;
+  min-width: 48px;
+}
+.apx-snd__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.apx-snd__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--well-bg);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.apx-snd__chip::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-faint);
+}
+.apx-snd__chip:hover {
+  color: var(--text);
+}
+.apx-snd__chip[aria-pressed='true'] {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.apx-snd__chip[aria-pressed='true']::before {
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+:is(.apx-snd__btn, .apx-snd__chip):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── #/dev/audio sandbox ── */
+.apx-snd-lab {
+  width: min(360px, calc(100vw - 2 * var(--gutter)));
+}
+.apx-snd-scope {
+  display: block;
+  width: 100%;
+  height: 120px;
+  border-radius: var(--radius-sm);
+  background: var(--well-bg);
+  border: 1px solid var(--line);
+}
+/* the pedal is held, not clicked: wider, and no scroll/long-press menu while held on touch */
+.apx-snd__btn--pedal {
+  width: 44px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}

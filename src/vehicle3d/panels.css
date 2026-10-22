@@ -1,0 +1,112 @@
+/* Panel bits (CarInfo / PartInfo): weight-split bar, toggle chips, fit chips. Theme tokens only. */
+.veh-split {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+/* the fills round their own ends: clipping the bar instead cut off the 50:50 line's ends */
+.veh-split__bar {
+  position: relative;
+  display: flex;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--well-bg);
+  border: 1px solid var(--line);
+}
+.veh-split__bar > i {
+  display: block;
+  height: 100%;
+}
+.veh-split__bar > i:first-child {
+  border-radius: 999px 0 0 999px;
+  background: var(--accent);
+}
+.veh-split__bar > i:last-child {
+  border-radius: 0 999px 999px 0;
+  background: var(--text-faint);
+  opacity: 0.55;
+}
+.veh-split__bar::after {
+  /* the 50:50 line */
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  background: var(--text);
+  opacity: 0.45;
+}
+.veh-split__legend {
+  display: flex;
+  justify-content: space-between;
+  font: 600 11px/1.2 var(--mono);
+  color: var(--text-muted);
+}
+.veh-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.veh-toggles button {
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.veh-toggles button:hover {
+  color: var(--text);
+}
+.veh-toggles button[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+.veh-toggles button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.veh-fit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.veh-fit span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font: 600 12px/1.2 var(--mono);
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--well-bg);
+  color: var(--text);
+}
+.veh-fit span small {
+  font: 500 11px/1 var(--font);
+  color: var(--text-muted);
+}
+.veh-fit .is-ok {
+  border-color: var(--ok);
+}
+.veh-fit .is-tight {
+  border-color: var(--warn);
+}
+.veh-fit .is-clash {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.veh-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+.veh-row > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}

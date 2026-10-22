@@ -1,0 +1,26 @@
+# repo-local toolchain (portable Node, npm cache) — never commit
+.tools/
+node-v*-win-x64.zip
+*.zip
+
+# downloaded car model archives and their raw exports (large; only the optimised copies in
+# public/models/ are committed)
+/models/
+
+# deps & build output
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+# editor / OS junk
+*.un~
+*.swp
+*~
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/

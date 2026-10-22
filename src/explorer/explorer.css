@@ -1,0 +1,331 @@
+/* Explorer HUD bits: the see-through switch, the info card's reveal, tags over compared cars. */
+
+/* ── See-through switch (hub) ─────────────────────────── */
+.apx-see {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  background: var(--bg-solid);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+}
+.apx-see:hover {
+  border-color: var(--accent);
+}
+.apx-see:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.apx-see__icon {
+  width: 30px;
+  height: 16px;
+  flex: none;
+  color: var(--text-muted);
+}
+.apx-see__icon .is-solid {
+  fill: currentColor;
+  transition: opacity 0.45s ease;
+}
+.apx-see__icon .is-inner {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.6;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+.apx-see[aria-checked='true'] .apx-see__icon .is-solid {
+  opacity: 0.18;
+}
+.apx-see[aria-checked='true'] .apx-see__icon .is-inner {
+  opacity: 1;
+}
+.apx-see__label {
+  flex: 1 1 auto;
+  /* a narrow hub or a large font wraps the word; the switch stays inside the button */
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.apx-see kbd {
+  font: 600 11px/1 var(--mono);
+  color: var(--text-faint);
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+/* the switch itself */
+.apx-see__track {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--well-bg);
+  /* (in the line colour the track all but vanished off, in the dark theme: a dot, not a switch) */
+  border: 1px solid var(--text-faint);
+  transition: background 0.2s ease;
+}
+.apx-see__track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+.apx-see[aria-checked='true'] .apx-see__track {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.apx-see[aria-checked='true'] .apx-see__track::after {
+  transform: translateX(14px);
+  background: var(--accent-ink);
+}
+
+/* ── Reveal: rows that open in place (no new card) ────── */
+.apx-reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  margin-top: -12px;
+  transition:
+    grid-template-rows 0.35s ease,
+    opacity 0.3s ease,
+    margin-top 0.35s ease;
+}
+/* (the clip runs 4 px outside the rows, given back by the margin: clipped flush, the focus ring
+   of the overlay buttons at its edges was cut off) */
+.apx-reveal > div {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px;
+  margin: -4px;
+}
+.apx-reveal.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  margin-top: 0;
+}
+
+/* ── Tags over the cars of a comparison ───────────────── */
+.apx-cmp-tags {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+/* from above, past the tail: right edge on the anchor */
+.apx-cmp-tags.is-tail {
+  align-items: flex-end;
+  transform: translate(-100%, -50%);
+}
+.apx-cmp-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  font: 600 11px/1 var(--font);
+  color: var(--text);
+  background: var(--label-bg);
+  border: 1px solid var(--sys);
+  border-radius: 999px;
+  padding: 4px 8px;
+  user-select: none;
+}
+.apx-cmp-tag i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--sys);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .apx-reveal,
+  .apx-see__track,
+  .apx-see__track::after,
+  .apx-see__icon * {
+    transition: none;
+  }
+}
+
+/* ── The car view's hub: see-through and Drive on top, the rest below (folded on phones) ── */
+/* the switch has the hub's width to itself (beside Drive and Hot lap it was squeezed below its
+   own size and its track stuck out of the button); Drive and Hot lap share the row under it */
+.apx-hub__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 8px;
+}
+.apx-hub__top .apx-see {
+  flex: 1 1 100%;
+}
+.apx-hub__top > .apx-btn {
+  flex: 1 1 0;
+  white-space: nowrap;
+}
+.apx-hub__more {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+/* Labels: the word beside its switch, on one row (the hub keeps its height with the see-through
+   switch on a row of its own, clear of the compared cars' name tags beside it) */
+.apx-hub__labels {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+.apx-hub__labels > .apx-seg {
+  flex: 1 1 auto;
+}
+.apx-hub__gear {
+  display: none;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-solid);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.apx-hub__gear[aria-expanded='true'] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.apx-hub__gear:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+@media (hover: none) {
+  .apx-see kbd {
+    display: none;
+  }
+}
+@media (min-width: 761px) {
+  /* the hub stops short of the breadcrumb (and the mini-map) above it, its height measured
+     (Hud.tsx); with every fold open it scrolls rather than grow over them */
+  .apx-hub {
+    max-height: calc(
+      100vh - var(--topbar-h) - 2 * var(--gutter) - var(--gap) - var(--apx-top-h, 52px)
+    );
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+}
+@media (max-width: 760px) {
+  .apx-hub__gear {
+    display: inline-flex;
+  }
+  .apx-hub.is-foldable:not(.is-open) .apx-hub__more {
+    display: none;
+  }
+  .apx-see kbd {
+    display: none;
+  }
+  /* the info card sits on top of the bottom row, however tall the hub and picker are (the HUD
+     measures it); without the measure, as the UI kit has it */
+  .apx-overlay > .apx-dock--top-right {
+    bottom: calc(var(--gutter) + var(--apx-bottom-h, 64px));
+  }
+}
+
+/* ── the painted car's call to see through ─────────────── */
+.apx-hint.is-call {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 0 4px;
+  padding: 7px 15px 7px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: normal;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+.apx-hint.is-call:hover {
+  filter: brightness(1.08);
+}
+.apx-hint.is-call:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+.apx-hint.is-call::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent-ink);
+  animation: apx-call 1.6s ease-in-out infinite;
+}
+@keyframes apx-call {
+  50% {
+    opacity: 0.25;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .apx-hint.is-call::before {
+    animation: none;
+  }
+}
+/* the side panel takes the wheel and the clicks over all its box (gaps and scrollbar too):
+   through to the scene they zoomed the car and opened a part under the panel */
+.apx-overlay > .apx-dock--top-right {
+  pointer-events: auto;
+}
+
+/* a chip that opens its part (the engine chip on the car card) */
+.apx-chip.is-link {
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  border-color: var(--sys, var(--line));
+}
+.apx-chip.is-link:hover {
+  background: var(--bg-hover);
+}
+.apx-chip.is-link::after {
+  content: '›';
+  color: var(--text-muted);
+}
+.apx-chip.is-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* the see-through legend: each system's picture in its colour, and one word */
+.apx-legend--icons {
+  gap: 6px 10px;
+}
+.apx-legend--icons svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  fill: color-mix(in srgb, var(--sys) 22%, transparent);
+  stroke: var(--sys);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

@@ -1,0 +1,186 @@
+/* Engine panels: firing timeline, crank-throw diagram, balance bars. Theme tokens only. */
+.apx-fire {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.apx-fire__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.apx-fire__order {
+  font-family: var(--mono);
+  color: var(--text);
+}
+.apx-fire__now {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+}
+.apx-fire svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: none;
+  cursor: ew-resize;
+  user-select: none;
+}
+.apx-fire__row {
+  fill: var(--well-bg);
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.apx-fire__tick {
+  stroke: var(--text-faint);
+  stroke-width: 1;
+}
+.apx-fire__num {
+  font: 600 8px var(--mono);
+  fill: var(--text);
+}
+.apx-fire__lbl,
+.apx-fire__axis {
+  font: 8px var(--mono);
+  fill: var(--text-faint);
+}
+.apx-fire__cursor {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.apx-engine-viz {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.apx-crank {
+  flex: 0 0 84px;
+  width: 84px;
+  height: 84px;
+}
+.apx-crank__ring {
+  fill: none;
+  stroke: var(--line-strong);
+}
+.apx-crank__bank {
+  stroke: var(--text-faint);
+  stroke-dasharray: 2 2;
+}
+.apx-crank__throw {
+  stroke: var(--text);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+.apx-crank__num {
+  font: 600 8px var(--mono);
+  fill: var(--text);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+/* shake and rock (rows, each with its picture) against 1st and 2nd order (columns) */
+.apx-bal {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: auto 1fr 1fr;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  min-width: 0;
+}
+.apx-bal__order {
+  font: 600 10.5px/1 var(--mono);
+  color: var(--sys);
+  text-align: center;
+}
+.apx-bal__cell {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.apx-bal__track {
+  flex: 1 1 auto;
+  min-width: 14px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--well-bg);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.apx-bal__bar {
+  display: block;
+  height: 100%;
+  background: var(--sys);
+}
+.apx-bal__val {
+  font-family: var(--mono);
+  color: var(--text);
+  text-align: right;
+  min-width: 22px;
+  white-space: nowrap;
+}
+/* the picture of the motion: it moves only when the engine does */
+.apx-bal__key {
+  display: inline-flex;
+  color: var(--text);
+}
+.apx-bal__icon {
+  width: 28px;
+  height: 24px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  overflow: visible;
+}
+.apx-bal__block {
+  fill: var(--well-bg);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.apx-bal__key:not(.is-live) {
+  color: var(--text-muted);
+}
+.apx-bal__key.is-live .is-shake .apx-bal__block {
+  animation: apx-bal-shake 0.32s ease-in-out infinite alternate;
+}
+.apx-bal__key.is-live .is-rock .apx-bal__block {
+  animation: apx-bal-rock 0.6s ease-in-out infinite alternate;
+}
+@keyframes apx-bal-shake {
+  from {
+    transform: translateY(-1.6px);
+  }
+  to {
+    transform: translateY(1.6px);
+  }
+}
+@keyframes apx-bal-rock {
+  from {
+    transform: rotate(-11deg);
+  }
+  to {
+    transform: rotate(11deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .apx-bal__key.is-live .apx-bal__block {
+    animation: none;
+  }
+}
+
+/* the firing order (a V12's wraps) beside the gap between firings */
+.apx-engine-firing {
+  grid-template-columns: 1fr auto;
+}
+.apx-engine-firing .apx-stat__value {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

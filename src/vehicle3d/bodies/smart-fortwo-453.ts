@@ -1,0 +1,177 @@
+/**
+ * Smart ForTwo (C453): the tall stub. Barely any bonnet, a long raked screen springing from
+ * above the front wheels, flat roof, near-vertical glass tailgate, and the contrasting tridion
+ * safety cell framing the cabin (black roof and pillars, the C-shaped band behind the door).
+ */
+import { dlo, roofPatch, roundRect, slant } from '../shell/decals';
+import type { BodyTuning } from '../shell/types';
+
+const tune: BodyTuning = () => ({
+  top: [
+    [420, 560],
+    [412, 640],
+    [380, 722],
+    [250, 822],
+    [100, 905],
+    [-100, 1110],
+    [-350, 1400],
+    [-500, 1520],
+    [-900, 1555],
+    [-1600, 1550],
+    [-1950, 1525],
+    [-2120, 1440],
+    [-2230, 1120],
+    [-2265, 820],
+    [-2275, 640],
+  ],
+  belt: [
+    [420, 550],
+    [395, 700],
+    [250, 820],
+    [100, 905],
+    [-500, 985],
+    [-1500, 1020],
+    [-1950, 1040],
+    [-2180, 1030],
+    [-2260, 820],
+    [-2275, 630],
+  ],
+  bottom: [
+    [420, 320],
+    [300, 200],
+    [150, 160],
+    [-1950, 165],
+    [-2150, 240],
+    [-2275, 330],
+  ],
+  plan: [
+    [420, 0.94],
+    [0, 0.98],
+    [-900, 0.97],
+    [-1873, 1],
+    [-2275, 0.98],
+  ],
+  nose: { len: 230, p: 2.6 },
+  tail: { len: 140, p: 3 },
+  cabin: [-2240, 110],
+  roofHalf: 0.86,
+  crown: 35,
+  topExp: 2.4,
+  tuck: 35,
+  tuckUnder: 25,
+  shoulder: 0.6,
+  beltCrease: true,
+  flare: [25, 30],
+  flareTop: 0.2,
+  archGap: 36,
+  lip: 12,
+  accent: '#1c1e22',
+  mirrors: { x: -10, dy: 72, mat: 'black' },
+  exhaust: [{ z: -450, y: 260, r: 30 }],
+  decals: (s, d) => {
+    const keep = d.filter((x) => x.tag === 'windscreen' || x.tag === 'rear-window');
+    const bandFront = -1460;
+    const bandRear = -1720;
+    return [
+      ...keep,
+      // tridion: roof, pillars (a frame round the glass) and the band behind the door down to the sill
+      {
+        tag: 'tridion-roof',
+        view: 'top',
+        ...roofPatch(s, -2160, -470, 0),
+        mat: 'accent',
+        offset: 2,
+        outline: false,
+      },
+      {
+        tag: 'tridion-frame',
+        view: 'side',
+        ...dlo(s, {
+          rear: bandFront - 10,
+          rearTop: bandFront + 40,
+          top: -20,
+          bottom: 0,
+          aPillar: 10,
+        }),
+        mat: 'accent',
+        mirror: true,
+        offset: 3,
+        nv: 4,
+        outline: false,
+      },
+      {
+        tag: 'tridion-band',
+        view: 'side',
+        u0: bandRear,
+        u1: bandFront,
+        lo: (x) => s.bottom(x) + 35,
+        hi: (x) => s.roofEdge(x) + 12,
+        mat: 'accent',
+        mirror: true,
+        offset: 3,
+        nv: 8,
+      },
+      {
+        tag: 'tridion-sill',
+        view: 'side',
+        u0: -1480,
+        u1: -360,
+        lo: (x) => s.bottom(x) + 30,
+        hi: (x) => s.bottom(x) + 135,
+        mat: 'accent',
+        mirror: true,
+        offset: 3,
+        nv: 2,
+        outline: false,
+      },
+      {
+        tag: 'dlo',
+        view: 'side',
+        ...dlo(s, { rear: bandFront + 50, rearTop: bandFront + 110, top: 34, aPillar: 70 }),
+        mat: 'glass',
+        mirror: true,
+        offset: 5,
+        nv: 4,
+      },
+      {
+        tag: 'headlight',
+        view: 'front',
+        ...slant(roundRect(370, 770, 650, 790, 64), 0.16),
+        mat: 'lamp',
+        mirror: true,
+        offset: 5,
+      },
+      {
+        tag: 'grille',
+        view: 'front',
+        ...roundRect(-320, 320, 560, 690, 46),
+        mat: 'grille',
+        offset: 4,
+      },
+      {
+        tag: 'intake',
+        view: 'front',
+        ...roundRect(-460, 460, 340, 440, 40),
+        mat: 'grille',
+        offset: 3,
+      },
+      {
+        tag: 'taillight',
+        view: 'rear',
+        ...roundRect(560, 790, 720, 990, 46),
+        mat: 'lampRed',
+        mirror: true,
+        offset: 5,
+      },
+      {
+        tag: 'bumper',
+        view: 'rear',
+        ...roundRect(-720, 720, 300, 430, 24),
+        mat: 'black',
+        offset: 3,
+      },
+    ];
+  },
+});
+
+export default tune;
