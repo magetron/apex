@@ -25,11 +25,14 @@ const SPEC: CornerSpec = {
 
 export const liftOff: ScenarioDef = {
   id: 'lift-off',
-  label: 'Lift mid-corner',
+  question: 'What if you lift mid-corner?',
+  label: 'Lift-off',
   short: 'Lift',
   title: 'Throttle snapped shut mid-corner, steering held',
   speed: { min: 40, max: 75, def: 63, label: 'Corner speed' },
   headline: 'yawSpike',
+  // the rear lets go about a second after the lift
+  key: { at: 'event', before: 0.3, after: 1.5 },
   event: 'Lift',
   radius: SPEC.radius,
   plan: (kmh) => cornerPlan(SPEC, kmh),

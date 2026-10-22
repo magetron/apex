@@ -7,7 +7,7 @@ import { useEffect, useMemo } from 'react';
 import { CatmullRomCurve3, TubeGeometry, Vector3, type BufferGeometry } from 'three';
 import { ghostMat, sysMat } from '../scene/materials';
 import type { System } from '../scene/palette';
-import { Part } from '../scene/Part';
+import { Part } from './partIds';
 import type { PowertrainLayout, SuspensionKind, Vec3, VehicleSpec } from '../spec/types';
 import { mmVec } from '../spec/units';
 import { G, span } from './geom';

@@ -19,11 +19,14 @@ const target = { v: 0, a: 0 };
 
 export const laneChange: ScenarioDef = {
   id: 'lane-change',
+  question: 'How fast does it change direction?',
   label: 'Lane change',
   short: 'Lane',
   title: 'Swerve into the next lane and back at a steady speed',
   speed: { min: 50, max: 100, def: 80, label: 'Speed' },
   headline: 'yawLag',
+  // the first swerve: the wheel turns, the tail follows a moment later
+  key: { at: 'event', before: 0.1, after: 1.6, label: 'Swerve' },
   plan(kmh) {
     const v = kmh / 3.6;
     const gateAt = pullAwayLen(v) + STEADY;

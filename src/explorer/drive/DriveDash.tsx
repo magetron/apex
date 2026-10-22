@@ -8,10 +8,14 @@
 import { useEffect, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import { Segmented } from '../../app/ui';
 import { held } from './input';
+import { KEY_RATE } from './key';
+import { Legend } from './Legend';
 import { drivePlayback, driveTelemetry, RATES, useDrive, type Rate } from './state';
 import './drive.css';
 
 const RATE_LABEL: Record<Rate, string> = { 1: '1×', 0.5: '½×', 0.25: '¼×', 0.125: '⅛×' };
+/** the automatic slow motion's rate, as the timeline names it */
+const KEY_RATE_LABEL = RATE_LABEL[KEY_RATE as Rate] ?? `${KEY_RATE}×`;
 /** steering-wheel turns per road-wheel turn, for the picture of the wheel */
 const STEER_RATIO = 15;
 
@@ -153,9 +157,11 @@ function Wheel() {
   );
 }
 
-export function DriveDash() {
+/** `car`: the car switcher, on top of the dashboard (swapping keeps the scenario and settings) */
+export function DriveDash({ car }: { car?: ReactNode } = {}) {
   const playing = useDrive((s) => s.playing);
   const rate = useDrive((s) => s.rate);
+  const autoSlow = useDrive((s) => s.autoSlow);
   const mode = useDrive((s) => s.mode);
   const touch = useTouch();
 
@@ -173,7 +179,10 @@ export function DriveDash() {
 
   useEffect(() => {
     let raf = 0;
-    const last = { ticks: '' };
+    const last = { ticks: '', slow: false };
+    let pin: HTMLElement | null = null;
+    let pinText: HTMLElement | null = null;
+    let pinLabel = '';
     const set = (el: HTMLElement | null, s: string) => {
       if (el && el.textContent !== s) el.textContent = s;
     };
@@ -195,12 +204,17 @@ export function DriveDash() {
         scrub.current.value = pb.t.toFixed(2);
       }
       set(clock.current, `${pb.t.toFixed(1)} s`);
-      // the steps on the timeline, once their times are known
-      const key = pb.marks.map((m) => `${m.t.toFixed(2)}${m.label}`).join('|') + `|${dur}`;
+      // the steps on the timeline, once their times are known, and the key moment's pin
+      const k = pb.key;
+      const key =
+        pb.marks.map((m) => `${m.t.toFixed(2)}${m.label}`).join('|') +
+        `|${dur}|${k ? `${k.t0.toFixed(2)}-${k.t1.toFixed(2)}-${k.label}` : ''}`;
       if (key !== last.ticks && ticks.current) {
         last.ticks = key;
+        last.slow = false;
         const el = ticks.current;
         el.replaceChildren();
+        pin = pinText = null;
         for (const m of pb.marks) {
           if (!Number.isFinite(m.t)) continue;
           if (m.holdS) {
@@ -214,14 +228,43 @@ export function DriveDash() {
           tk.className = 'apx-drive-scrub__tick';
           tk.style.left = `${(100 * m.t) / dur}%`;
           tk.style.setProperty('--sys', KIND_VAR[m.kind]);
-          // only the scripted event is named here; the info card lists every step
-          if (m.kind === 'event') {
+          // only the scripted event is named here (by the pin, when there is one); the info
+          // card lists every step
+          if (m.kind === 'event' && !k) {
             const label = document.createElement('span');
             label.textContent = m.label;
             tk.append(label);
           }
           el.append(tk);
         }
+        if (k) {
+          // the stretch shown slowed down, and a pin that jumps to it
+          const band = document.createElement('i');
+          band.className = 'apx-drive-scrub__key';
+          band.style.left = `${(100 * k.t0) / dur}%`;
+          band.style.width = `${(100 * Math.max(0, Math.min(k.t1, dur) - k.t0)) / dur}%`;
+          el.append(band);
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          pin = btn;
+          pin.className = 'apx-drive-pin';
+          pin.style.left = `${(100 * k.t) / dur}%`;
+          pin.title = 'Jump to the moment that matters';
+          pin.addEventListener('click', () => {
+            drivePlayback.seek = Math.max(0, k.t0 - 0.4);
+            if (!useDrive.getState().playing) useDrive.setState({ playing: true });
+          });
+          pinText = document.createElement('span');
+          pinLabel = k.label;
+          pinText.textContent = pinLabel;
+          pin.append(pinText);
+          el.append(pin);
+        }
+      }
+      if (pin && pinText && pb.slow !== last.slow) {
+        last.slow = pb.slow;
+        pin.classList.toggle('is-slow', pb.slow);
+        pinText.textContent = pb.slow ? `${pinLabel} · ${KEY_RATE_LABEL}` : pinLabel;
       }
     };
     raf = requestAnimationFrame(tick);
@@ -234,6 +277,7 @@ export function DriveDash() {
 
   return (
     <section className="apx-panel apx-drive-dash" aria-label="Driver and timeline">
+      {car && <div className="apx-drive-car">{car}</div>}
       <div className="apx-drive-driver">
         <div
           className="apx-drive-wheel"
@@ -307,13 +351,26 @@ export function DriveDash() {
         <div className="apx-drive-rate">
           <Segmented<string>
             label="Playback speed"
-            value={String(rate)}
-            onChange={(v) => useDrive.setState({ rate: Number(v) as Rate })}
-            options={RATES.map((r) => ({
-              value: String(r),
-              label: RATE_LABEL[r],
-              title: r === 1 ? 'Real time' : 'Slow motion',
-            }))}
+            value={autoSlow ? 'auto' : String(rate)}
+            onChange={(v) =>
+              useDrive.setState(
+                v === 'auto'
+                  ? { autoSlow: true, rate: 1 }
+                  : { autoSlow: false, rate: Number(v) as Rate },
+              )
+            }
+            options={[
+              {
+                value: 'auto',
+                label: 'Auto',
+                title: `Real time, slowing to ${KEY_RATE_LABEL} round the moment that matters`,
+              },
+              ...RATES.map((r) => ({
+                value: String(r),
+                label: RATE_LABEL[r],
+                title: r === 1 ? 'Real time' : 'Slow motion',
+              })),
+            ]}
           />
         </div>
         <button
@@ -326,6 +383,7 @@ export function DriveDash() {
           {ICON.restart}
         </button>
       </div>
+      <Legend />
     </section>
   );
 }

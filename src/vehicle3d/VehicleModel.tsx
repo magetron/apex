@@ -12,7 +12,7 @@ import type { Group } from 'three';
 import type { OverlayKind } from '../content/types';
 import type { Level } from '../explorer/view';
 import { Assembly } from '../scene/Assembly';
-import { Part } from '../scene/Part';
+import { Part, PartPrefix } from './partIds';
 import { engineRuntime, vehiclePose } from '../scene/runtime';
 import { getEngine, getMotor } from '../spec/catalog';
 import { awdPartId } from '../spec/derive/awd';
@@ -32,6 +32,7 @@ import { EngineSlot, MotorSlot } from './EngineSlot';
 import { withEngine } from './fit';
 import { Overlays } from './overlays/Overlays';
 import { seatPlan } from './packaging';
+import { FadeGate, useSeeFade, WhileSeeThrough } from './seeFade';
 import { getShell } from './shell/build';
 import { FINAL_DRIVE, SpinContext, SpinRegistry } from './spin';
 import { useVehicleOverrides } from './store';
@@ -45,6 +46,11 @@ export interface VehicleModelProps {
   part?: string;
   /** overlays to draw; default: the visitor's choice from useVehicleOverrides (internals only) */
   overlays?: OverlayKind[];
+  /**
+   * Prefix for every part id ("vs1:"): a second car in the same scene (a comparison) must not
+   * share the explorer car's ids. Default none.
+   */
+  idPrefix?: string;
 }
 
 export const STAGES = 4;
@@ -132,6 +138,7 @@ export function VehicleModel({
   level = 'internals',
   part,
   overlays,
+  idPrefix = '',
 }: VehicleModelProps) {
   const swap = useVehicleOverrides((s) => s.engineSwap[base.id]);
   const chosen = useVehicleOverrides((s) => s.overlays);
@@ -150,7 +157,10 @@ export function VehicleModel({
   const engine = pt.kind === 'ice' ? getEngine(pt.engine) : null;
   const exterior = level === 'car' || level === 'drive';
   const inside = !exterior;
-  const shown = overlays ?? (level === 'internals' ? chosen : []);
+  // see-through on/off crossfades rather than switching: the painted body fades over the x-ray
+  const fade = useSeeFade(inside);
+  // at the car level the overlays only stay while the x-ray fades back out
+  const shown = overlays ?? (level === 'internals' || level === 'car' ? chosen : []);
   const sporty = ['coupe', 'supercar', 'roadster'].includes(vehicle.body.style);
   /** the detailed glTF body, if this car has one (else the procedural look-alike) */
   const detailed = gltfUrl(base.id);
@@ -174,30 +184,35 @@ export function VehicleModel({
         explode={{ dir: [0, 0, side], dist: 0.5, stage: 3 }}
       >
         <Steered on={p.axle === 'front'}>
-          {detailed ? (
-            <Detailed url={detailed}>
-              <GltfWheel
-                id={base.id}
-                corner={p.id.replace(/^wheel-/, '')}
-                at={mmVec(p.posMm)}
-                driven={!!p.driven}
-                xray={inside}
-                spin={inside && !!p.driven}
-              />
-            </Detailed>
-          ) : (
-            <Wheel
-              R={R}
-              w={mm(p.sizeMm[2])}
-              rimR={R * rimFrac}
-              side={side}
-              driven={!!p.driven}
-              xray={inside}
-              caliperAft={p.axle === 'front'}
-              spin={inside && !!p.driven}
-              dark={vehicle.body.style === 'offroader'}
-            />
-          )}
+          {/* the wheels change look halfway through the see-through crossfade */}
+          <FadeGate fade={fade}>
+            {(xray) =>
+              detailed ? (
+                <Detailed url={detailed}>
+                  <GltfWheel
+                    id={base.id}
+                    corner={p.id.replace(/^wheel-/, '')}
+                    at={mmVec(p.posMm)}
+                    driven={!!p.driven}
+                    xray={xray}
+                    spin={xray && !!p.driven}
+                  />
+                </Detailed>
+              ) : (
+                <Wheel
+                  R={R}
+                  w={mm(p.sizeMm[2])}
+                  rimR={R * rimFrac}
+                  side={side}
+                  driven={!!p.driven}
+                  xray={xray}
+                  caliperAft={p.axle === 'front'}
+                  spin={xray && !!p.driven}
+                  dark={vehicle.body.style === 'offroader'}
+                />
+              )
+            }
+          </FadeGate>
         </Steered>
         {level === 'internals' && <HitBox p={p} pad={1} />}
       </Part>
@@ -205,105 +220,131 @@ export function VehicleModel({
   };
 
   return (
-    <SpinContext.Provider value={reg}>
-      {/* centre the wheelbase on the origin so cameras can stay put while cars change */}
-      <Assembly
-        stages={STAGES}
-        position={[L / 2, 0, 0]}
-        center={[-L / 2, 0.45, 0]}
-        explode={level === 'internals' ? undefined : 0}
-      >
-        <Sprung pivot={[-L / 2, mm(vehicle.tires.diameterMm / 2), 0]}>
-          <Part
-            id="body"
-            system="body"
-            label={vehicle.name}
-            // clickable only as the entry point: a moving car under a resting pointer would
-            // flash its hover outline in drive mode
-            interactive={level === 'car'}
-            explode={{ dir: [0, 1, 0], dist: 1.25, stage: 0 }}
-          >
-            {detailed ? (
-              <Detailed url={detailed}>
-                <GltfBody
-                  id={base.id}
-                  paint={vehicle.body.paint ?? '#9aa5b1'}
-                  exterior={exterior}
-                />
-                {!exterior && <BodyFade stages={STAGES} />}
-              </Detailed>
-            ) : (
-              <BodyShell vehicle={base} shell={shell} exterior={exterior} stages={STAGES} />
-            )}
-          </Part>
+    <PartPrefix.Provider value={idPrefix}>
+      <SpinContext.Provider value={reg}>
+        {/* centre the wheelbase on the origin so cameras can stay put while cars change */}
+        <Assembly
+          stages={STAGES}
+          position={[L / 2, 0, 0]}
+          center={[-L / 2, 0.45, 0]}
+          explode={level === 'internals' ? undefined : 0}
+        >
+          <Sprung pivot={[-L / 2, mm(vehicle.tires.diameterMm / 2), 0]}>
+            <Part
+              id="body"
+              system="body"
+              label={vehicle.name}
+              // clickable only as the entry point: a moving car under a resting pointer would
+              // flash its hover outline in drive mode
+              interactive={level === 'car'}
+              explode={{ dir: [0, 1, 0], dist: 1.25, stage: 0 }}
+            >
+              {detailed ? (
+                <Detailed url={detailed}>
+                  {/* both bodies stay mounted: switching see-through only crossfades them */}
+                  <GltfBody
+                    id={base.id}
+                    paint={vehicle.body.paint ?? '#9aa5b1'}
+                    exterior
+                    fade={fade}
+                  />
+                  <GltfBody
+                    id={base.id}
+                    paint={vehicle.body.paint ?? '#9aa5b1'}
+                    exterior={false}
+                    fade={fade}
+                  />
+                  <BodyFade stages={STAGES} fade={fade} />
+                </Detailed>
+              ) : (
+                <FadeGate fade={fade}>
+                  {(xray) => (
+                    <BodyShell
+                      vehicle={base}
+                      shell={shell}
+                      exterior={!xray}
+                      stages={STAGES}
+                      fade={fade}
+                    />
+                  )}
+                </FadeGate>
+              )}
+            </Part>
 
-          <group visible={inside}>
-            {layout.parts
-              .filter((p) => p.kind !== 'wheel')
-              .map((p) => {
-                const rot: Vec3 = [p.rollDeg * DEG, p.yawDeg * DEG, 0];
-                const isEngine = p.kind === 'engine';
-                return (
-                  <Part
-                    key={p.id}
-                    id={p.id}
-                    system={SYSTEM_OF[p.kind]}
-                    label={p.label}
-                    position={mmVec(p.posMm)}
-                    rotation={rot}
-                    explode={{
-                      dir: isEngine ? [0, 1, 0] : undefined,
-                      dist: isEngine ? 0.75 : 0.45,
-                      stage: 2,
-                    }}
-                  >
-                    {isEngine && engine ? (
-                      <EngineSlot
-                        spec={engine}
-                        explode={level === 'part' && part === 'engine' ? undefined : 0}
-                      />
-                    ) : p.kind === 'motor' && motorOf(p) ? (
-                      <MotorSlot
-                        spec={motorOf(p)!}
-                        id={p.id}
-                        explode={level === 'part' && part === p.id ? undefined : 0}
-                      />
-                    ) : (
-                      <Component
-                        p={p}
-                        open={level === 'part' && part === p.id}
-                        gearbox={pt.kind === 'ice' ? pt.gearbox : undefined}
-                      />
-                    )}
-                    {level === 'internals' && <HitBox p={p} />}
-                    {level === 'part' && part === p.id && p.id === awdPart && (
-                      <AwdFlow vehicle={vehicle} part={p} />
-                    )}
-                  </Part>
-                );
-              })}
-            {layout.shafts.map((s) => (
-              <ShaftPart key={s.id} s={s} hit={level === 'internals'} />
-            ))}
-            <Chassis vehicle={vehicle} layout={layout} shell={shell} seats={seats} />
-            <Cabin vehicle={vehicle} layout={layout} shell={shell} seats={seats} />
-          </group>
-        </Sprung>
+            <WhileSeeThrough fade={fade}>
+              {layout.parts
+                .filter((p) => p.kind !== 'wheel')
+                .map((p) => {
+                  const rot: Vec3 = [p.rollDeg * DEG, p.yawDeg * DEG, 0];
+                  const isEngine = p.kind === 'engine';
+                  return (
+                    <Part
+                      key={p.id}
+                      id={p.id}
+                      system={SYSTEM_OF[p.kind]}
+                      label={p.label}
+                      position={mmVec(p.posMm)}
+                      rotation={rot}
+                      explode={{
+                        dir: isEngine ? [0, 1, 0] : undefined,
+                        dist: isEngine ? 0.75 : 0.45,
+                        stage: 2,
+                      }}
+                    >
+                      {isEngine && engine ? (
+                        <EngineSlot
+                          spec={engine}
+                          explode={level === 'part' && part === 'engine' ? undefined : 0}
+                        />
+                      ) : p.kind === 'motor' && motorOf(p) ? (
+                        <MotorSlot
+                          spec={motorOf(p)!}
+                          id={p.id}
+                          explode={level === 'part' && part === p.id ? undefined : 0}
+                        />
+                      ) : (
+                        <Component
+                          p={p}
+                          open={level === 'part' && part === p.id}
+                          gearbox={pt.kind === 'ice' ? pt.gearbox : undefined}
+                        />
+                      )}
+                      {level === 'internals' && <HitBox p={p} />}
+                      {level === 'part' && part === p.id && p.id === awdPart && (
+                        <AwdFlow vehicle={vehicle} part={p} />
+                      )}
+                    </Part>
+                  );
+                })}
+              {layout.shafts.map((s) => (
+                <ShaftPart key={s.id} s={s} hit={level === 'internals'} />
+              ))}
+              <Chassis vehicle={vehicle} layout={layout} shell={shell} seats={seats} />
+              <Cabin vehicle={vehicle} layout={layout} shell={shell} seats={seats} />
+            </WhileSeeThrough>
+          </Sprung>
 
-        {layout.parts.filter((p) => p.kind === 'wheel').map(wheel)}
+          {layout.parts.filter((p) => p.kind === 'wheel').map(wheel)}
 
-        {inside && shown.length > 0 && (
-          <Overlays
-            kinds={shown}
-            vehicle={vehicle}
-            base={base}
-            layout={layout}
-            mass={mass}
-            shell={shell}
-            seats={seats}
-          />
-        )}
-      </Assembly>
-    </SpinContext.Provider>
+          {shown.length > 0 && (
+            <FadeGate fade={fade}>
+              {(on) =>
+                on && (
+                  <Overlays
+                    kinds={shown}
+                    vehicle={vehicle}
+                    base={base}
+                    layout={layout}
+                    mass={mass}
+                    shell={shell}
+                    seats={seats}
+                  />
+                )
+              }
+            </FadeGate>
+          )}
+        </Assembly>
+      </SpinContext.Provider>
+    </PartPrefix.Provider>
   );
 }

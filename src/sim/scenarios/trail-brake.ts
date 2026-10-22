@@ -27,11 +27,13 @@ const SPEC: CornerSpec = {
 
 export const trailBrake: ScenarioDef = {
   id: 'trail-brake',
+  question: 'Can braking help you turn?',
   label: 'Trail braking',
   short: 'Trail',
   title: 'Braking in the turn, the same pedal for every car, steering held',
   speed: { min: 45, max: 70, def: 60, label: 'Corner speed' },
   headline: 'lineChange',
+  key: { at: 'event', before: 0.3, after: TRAIL_HOLD_S },
   event: 'Brake',
   radius: SPEC.radius,
   plan: (kmh) => cornerPlan(SPEC, kmh),

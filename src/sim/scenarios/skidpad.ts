@@ -31,11 +31,13 @@ function cones(): Float64Array {
 
 export const skidpad: ScenarioDef = {
   id: 'skidpad',
+  question: 'Which end lets go first?',
   label: 'Find the limit',
   short: 'Skidpad',
   title: 'Round a circle, speed rising until one end of the car slides',
   speed: { min: 45, max: 80, def: 64, label: 'Top speed' },
   headline: 'usGradient',
+  key: { at: 'let-go', before: 1.2, after: 0.8 },
   event: 'Limit',
   radius: SKIDPAD_RADIUS,
   verdict: (r) =>

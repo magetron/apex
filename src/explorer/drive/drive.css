@@ -62,28 +62,50 @@
   flex-direction: column;
   gap: 12px;
 }
+/* the questions, numbered as a progression; the picked one shows its technique */
 .apx-drive-techs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
   padding: 2px;
   background: var(--well-bg);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
 }
 .apx-drive-techs button {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  column-gap: 6px;
+  align-items: baseline;
   border: 0;
   background: transparent;
   color: var(--text-muted);
   font: inherit;
-  font-size: 13px;
+  font-size: 12.5px;
+  line-height: 1.3;
   text-align: left;
-  padding: 6px 8px;
+  padding: 3px 8px 3px 6px;
   border-radius: 4px;
   cursor: pointer;
+}
+.apx-drive-techs__n {
+  font: 600 10.5px/1 var(--mono);
+  color: var(--text-faint);
+  text-align: right;
+}
+.apx-drive-techs__q {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.apx-drive-techs__how {
+  grid-column: 2;
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.8;
+}
+.apx-drive-techs button[aria-checked='true'] .apx-drive-techs__n {
+  color: inherit;
 }
 .apx-drive-techs button:hover {
   color: var(--text);
@@ -305,8 +327,9 @@
   flex: 0 0 auto;
   font: 500 12px/1 var(--mono);
   color: var(--text-muted);
-  width: 42px;
+  min-width: 42px;
   text-align: right;
+  white-space: nowrap;
 }
 .apx-drive-rate {
   flex: 0 0 auto;
@@ -316,6 +339,80 @@
 }
 
 /* ── info card (top-right) ─────────────────────────────── */
+.apx-drive-q {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.apx-drive-q h2 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 650;
+  color: var(--text);
+}
+.apx-drive-q span {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+/* the takeaway: the lesson, then one line per car */
+.apx-drive-take {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.apx-drive-info .apx-drive-lesson {
+  margin: 0;
+  padding: 6px 0 6px 10px;
+  border-left: 3px solid var(--accent);
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 550;
+  color: var(--text);
+  animation: apx-drive-in 400ms ease-out;
+}
+@keyframes apx-drive-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.apx-drive-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+.apx-drive-lines li {
+  color: var(--text-muted);
+}
+.apx-drive-lines b {
+  font-weight: 600;
+  color: var(--text);
+  margin-right: 5px;
+}
+.apx-drive-lines b::after {
+  content: ':';
+}
+.apx-drive-lines [data-tone] {
+  animation: apx-drive-in 400ms ease-out;
+}
+.apx-drive-lines [data-tone='under'] {
+  color: color-mix(in srgb, var(--accent) 75%, var(--text));
+}
+.apx-drive-lines [data-tone='over'] {
+  color: color-mix(in srgb, var(--warn) 65%, var(--text));
+}
+.apx-drive-lines [data-tone='spin'] {
+  color: color-mix(in srgb, var(--danger) 75%, var(--text));
+}
 .apx-drive-steps {
   display: flex;
   flex-wrap: wrap;
@@ -525,5 +622,239 @@
   }
   .apx-drive-rate {
     display: none;
+  }
+}
+
+/* the car switcher on top of the dashboard */
+.apx-drive-car {
+  margin: -6px -8px 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* the cars the visitor picked to drive against (× to remove), and "+ Car" */
+.apx-drive-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.apx-drive-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  border: 1px solid var(--line-strong);
+  background: var(--well-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.apx-drive-pick > span {
+  color: var(--text-faint);
+}
+.apx-drive-pick:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.apx-drive-pick:hover > span {
+  color: var(--text);
+}
+.apx-drive-pick.is-add {
+  color: var(--text-muted);
+  border-style: dashed;
+  background: transparent;
+}
+.apx-drive-pick:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.apx-drive-pick:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.apx-drive-pick .apx-drive-dot {
+  margin-right: 0;
+}
+
+/* the key moment on the timeline: the stretch shown slowed down, and a pin that jumps to it */
+.apx-drive-scrub__key {
+  position: absolute;
+  bottom: 2px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+  opacity: 0.8;
+}
+.apx-drive-pin {
+  position: absolute;
+  top: -15px;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px 2px 4px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--bg-solid);
+  color: var(--text);
+  font: 650 9.5px/1 var(--font);
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.apx-drive-pin::before {
+  content: '';
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 6px solid var(--accent);
+}
+.apx-drive-pin:hover,
+.apx-drive-pin:focus-visible {
+  background: var(--accent);
+  color: var(--accent-ink);
+  outline: none;
+}
+.apx-drive-pin:hover::before,
+.apx-drive-pin:focus-visible::before {
+  border-top-color: var(--accent-ink);
+}
+.apx-drive-pin.is-slow {
+  background: var(--accent);
+  color: var(--accent-ink);
+  animation: apx-drive-pulse 1s ease-in-out infinite;
+}
+.apx-drive-pin.is-slow::before {
+  border-top-color: var(--accent-ink);
+}
+@keyframes apx-drive-pulse {
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .apx-drive-pin.is-slow,
+  .apx-drive-lesson,
+  .apx-drive-lines [data-tone] {
+    animation: none;
+  }
+}
+
+/* "how to read this": first visit, and the dashboard's ? button */
+.apx-drive-legend {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 40;
+  width: min(360px, calc(100vw - 2 * var(--gutter)));
+  max-height: calc(100vh - 2 * var(--gutter));
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--bg-solid);
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  font-size: 13px;
+  line-height: 1.35;
+}
+.apx-drive-legend h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.apx-drive-legend ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.apx-drive-legend li {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+.apx-drive-legend svg {
+  display: block;
+  overflow: visible;
+}
+.apx-drive-legend__time .is-track {
+  fill: var(--line-strong);
+}
+.apx-drive-legend__time .is-hold {
+  fill: var(--warn);
+  opacity: 0.4;
+}
+.apx-drive-legend__time .is-pin,
+.apx-drive-legend__time .is-key {
+  fill: var(--accent);
+}
+.apx-drive-legend .apx-btn {
+  align-self: flex-end;
+}
+
+/* the hub is taller than a short window: scroll it rather than push its top under the bar */
+@media (min-width: 761px) {
+  .apx-dock--bottom > .apx-slot-left > .apx-panel:has(.apx-drive-hub) {
+    max-height: calc(100vh - var(--topbar-h) - 2 * var(--gutter));
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+}
+/* room above the scrubber for the key moment's pin */
+.apx-drive-time:has(.apx-drive-pin) {
+  margin-top: 6px;
+}
+
+/* a narrow dashboard: the playback speed drops below the scrubber rather than squeeze it out */
+.apx-drive-dash {
+  container-type: inline-size;
+}
+@container (max-width: 450px) {
+  .apx-drive-time {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+  .apx-drive-scrub {
+    flex-basis: 120px;
+  }
+  /* (no display here: on phones the playback speed stays hidden) */
+  .apx-drive-rate {
+    order: 10;
+    flex: 1 0 100%;
+  }
+}
+
+/* once the run has ended, the takeaway moves up under the question, ahead of the live readouts */
+.apx-drive-info.is-revealed > .apx-drive-q {
+  order: -2;
+}
+.apx-drive-info.is-revealed > .apx-drive-take {
+  order: -1;
+}
+
+/* phones: the revealed takeaway gets more of the top, never more than the room above the bottom row */
+@media (max-width: 760px) {
+  .apx-dock--top-right:has(.apx-drive-info.is-revealed) {
+    max-height: max(
+      20vh,
+      min(34vh, calc(100vh - var(--topbar-h) - var(--gutter) - 52px - var(--apx-bottom-h, 50vh)))
+    );
   }
 }

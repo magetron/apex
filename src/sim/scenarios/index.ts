@@ -30,16 +30,21 @@ export const SCENARIO_IDS: DriveScenario[] = [
   'braking',
 ];
 
-/** The drive hub's list: a corner from entry to exit, then the slide, then straight-line tests. */
+/**
+ * The drive hub's list, as a progression: load moving in a straight line (the stop), the grip
+ * limit on a steady circle, then the pedals mid-corner moving load by accident (lift) and on
+ * purpose (brake, throttle), what to do when the tail goes, a technique built on all of it,
+ * and finally how fast a car answers the wheel.
+ */
 export const HUB_ORDER: ScenarioId[] = [
+  'braking',
   'skidpad',
-  'trail-brake',
   'lift-off',
-  'catch',
+  'trail-brake',
   'power-exit',
+  'catch',
   'left-foot',
   'lane-change',
-  'braking',
 ];
 
 export { ScenarioRun, runHeadless } from './run';
@@ -49,6 +54,7 @@ export {
   METRICS,
   VERDICTS,
   type Ctl,
+  type KeySpec,
   type Mark,
   type MetricId,
   type Plan,

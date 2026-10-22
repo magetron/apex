@@ -36,11 +36,14 @@ const withCatch = (spec: CornerSpec, kmh: number) => {
 
 export const catchSlide: ScenarioDef = {
   id: 'catch',
-  label: 'Catch a slide',
+  question: 'Can you catch a slide?',
+  label: 'Opposite lock',
   short: 'Catch',
   title: 'Lift near the limit, hands still, then the driver countersteers',
   speed: { min: 55, max: 68, def: 64, label: 'Corner speed' },
   headline: 'counterDeg',
+  // the slide builds while the hands are still, then the countersteer catches it
+  key: { at: 'event', before: 0.3, after: HANDS_S + 1.2 },
   event: 'Lift',
   radius: SPEC.radius,
   plan: (kmh) => withCatch(SPEC, kmh),

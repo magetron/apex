@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { VehicleSpec } from '../../spec/types';
 import { getEngine, getMotor, getVehicle, listVehicles } from '../../spec/catalog';
 import { carParams, G, type Tuning } from '../model';
-import { runHeadless, ScenarioRun, SCENARIO_IDS, SCENARIOS } from './index';
+import { HUB_ORDER, runHeadless, ScenarioRun, SCENARIO_IDS, SCENARIOS } from './index';
 import { TRACE_KEYS } from './trace';
 
 const run = (
@@ -198,5 +198,34 @@ describe('determinism', () => {
     r.reset();
     expect([r.st.x, r.st.n, r.st.vx]).toEqual(x0);
     expect(G).toBeGreaterThan(9);
+  });
+});
+
+describe('the drive hub', () => {
+  it('lists every scenario once, as a progression from a straight stop to a quick swerve', () => {
+    expect([...HUB_ORDER].sort()).toEqual(Object.keys(SCENARIOS).sort());
+    expect(HUB_ORDER).toEqual([
+      'braking',
+      'skidpad',
+      'lift-off',
+      'trail-brake',
+      'power-exit',
+      'catch',
+      'left-foot',
+      'lane-change',
+    ]);
+  });
+
+  it('names each scenario by the question it answers, with its technique', () => {
+    const questions = new Set<string>();
+    for (const id of HUB_ORDER) {
+      const def = SCENARIOS[id];
+      expect(def.question).toMatch(/^[A-Z].*\?$/);
+      expect(def.label.length).toBeGreaterThan(3);
+      questions.add(def.question);
+      expect(def.key.before).toBeGreaterThanOrEqual(0);
+      expect(def.key.after).toBeGreaterThan(0);
+    }
+    expect(questions.size).toBe(HUB_ORDER.length);
   });
 });

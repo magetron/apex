@@ -20,6 +20,7 @@ import {
   trimMat,
   tyreMat,
 } from './materials';
+import type { SeeFade } from './seeFade';
 import type { Shell } from './shell/build';
 
 const DEFAULT_PAINT = '#9aa5b1';
@@ -30,14 +31,19 @@ export function useVehicleTheme() {
   return theme;
 }
 
-/** Fades the x-ray shell as the first explode stage lifts it away. */
-export function BodyFade({ stages }: { stages: number }) {
+/**
+ * Fades the x-ray shell as the first explode stage lifts it away, and in with the see-through
+ * crossfade (`fade`) while the painted body fades out over it.
+ */
+export function BodyFade({ stages, fade }: { stages: number; fade?: SeeFade }) {
   useFrame(() => {
     const e = useScene.getState().explode;
     const t = Math.min(1, Math.max(0, e * stages));
     const k = 1 - 0.75 * t * t * (3 - 2 * t);
-    bodyGhost.uniforms.uOpacity.value = BODY_GHOST_OPACITY * k;
-    bodyLines.opacity = (useTheme.getState().theme === 'light' ? 0.4 : 0.32) * (0.35 + 0.65 * k);
+    const see = fade ? fade.k : 1;
+    bodyGhost.uniforms.uOpacity.value = BODY_GHOST_OPACITY * k * see;
+    bodyLines.opacity =
+      (useTheme.getState().theme === 'light' ? 0.4 : 0.32) * (0.35 + 0.65 * k) * see;
   });
   return null;
 }
@@ -47,11 +53,13 @@ export function BodyShell({
   shell,
   exterior,
   stages,
+  fade,
 }: {
   vehicle: VehicleSpec;
   shell: Shell;
   exterior: boolean;
   stages: number;
+  fade?: SeeFade;
 }) {
   useVehicleTheme();
   const paint = vehicle.body.paint ?? DEFAULT_PAINT;
@@ -59,7 +67,7 @@ export function BodyShell({
   if (!exterior) {
     return (
       <>
-        <BodyFade stages={stages} />
+        <BodyFade stages={stages} fade={fade} />
         <mesh geometry={shell.body} material={bodyGhost} renderOrder={5} />
         <mesh geometry={shell.wells} material={bodyGhost} renderOrder={5} />
         <lineSegments geometry={shell.lines} material={bodyLines} renderOrder={6} />

@@ -215,5 +215,6 @@ describe('determinism and sanity', () => {
       }
       expect(speedOf(st)).toBe(0);
     }
-  });
+    // every car in the catalog, 6 s each at 240 Hz: slow when the whole suite runs at once
+  }, 30_000);
 });

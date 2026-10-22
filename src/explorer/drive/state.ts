@@ -10,6 +10,7 @@ import { massProps } from '../../spec/derive/mass';
 import { HUB_ORDER, SCENARIOS, type Mark, type ScenarioId } from '../../sim/scenarios';
 import { REF_LATERAL_LIMIT } from '../../sim/model';
 import type { VehicleSpec } from '../../spec/types';
+import type { KeyMoment } from './key';
 
 // ── layout families ─────────────────────────────────────────────────────────────────────
 export type Family = 'FF' | 'FR' | 'MR' | 'RR' | 'AWD' | 'EV';
@@ -77,6 +78,9 @@ export function representative(f: Family, like?: VehicleSpec): VehicleSpec | nul
 /** Shown when the visitor hasn't picked: every other combustion layout. */
 const AUTO: Family[] = ['FF', 'FR', 'MR', 'RR', 'AWD'];
 
+/** The stand-ins shown when the visitor hasn't picked: every other combustion layout. */
+export const autoFamilies = (car: VehicleSpec): Family[] => AUTO.filter((f) => f !== familyOf(car));
+
 /** Ghost entries may be vehicle ids (tours) or family codes (the hub). */
 export function resolveGhosts(car: VehicleSpec, ghosts: string[] | null): VehicleSpec[] {
   const own = familyOf(car);
@@ -90,6 +94,31 @@ export function resolveGhosts(car: VehicleSpec, ghosts: string[] | null): Vehicl
     if (v && v.id !== car.id && !out.some((o) => o.id === v.id)) out.push(v);
   }
   return out.slice(0, 5);
+}
+
+/**
+ * Who runs alongside the visitor's car: the cars they picked to compare with (first, so never
+ * dropped), then the layout stand-ins. Stand-ins default to every other layout, or to none when
+ * cars were picked (a 911 compared with a Cayman drives against just the Cayman).
+ */
+export function lineupGhosts(
+  car: VehicleSpec,
+  ghosts: string[] | null,
+  picked: readonly string[] = [],
+): VehicleSpec[] {
+  if (!picked.length) return resolveGhosts(car, ghosts);
+  return resolveGhosts(car, [...picked, ...(ghosts ?? [])]);
+}
+
+/** The layout families whose stand-ins are on the road (not the picked cars'). */
+export function standInFamilies(
+  car: VehicleSpec,
+  ghosts: string[] | null,
+  picked: readonly string[] = [],
+): Family[] {
+  return lineupGhosts(car, ghosts, picked)
+    .filter((v) => !picked.includes(v.id))
+    .map(familyOf);
 }
 
 // ── settings ───────────────────────────────────────────────────────────────────────────
@@ -113,18 +142,24 @@ export interface DriveSettings {
   camera: CameraMode;
   playing: boolean;
   rate: Rate;
+  /** slow down around each scenario's key moment by itself, until the visitor picks a rate */
+  autoSlow: boolean;
   esc: boolean;
   forces: boolean;
   /** bump to restart the run */
   runId: number;
   setScenario: (s: ScenarioId) => void;
   setSpeed: (kmh: number) => void;
-  toggleGhost: (car: VehicleSpec, f: Family) => void;
+  /** a layout stand-in on or off (`picked`: the cars the visitor chose, which stay) */
+  toggleGhost: (car: VehicleSpec, f: Family, picked?: readonly string[]) => void;
+  /** the default stand-ins become an explicit list, so picking a car keeps them on the road */
+  keepStandIns: (car: VehicleSpec) => void;
   restart: () => void;
 }
 
 export const useDrive = create<DriveSettings>()((set, get) => ({
-  scenario: 'power-exit',
+  // the first question of the progression
+  scenario: HUB_ORDER[0],
   speed: Object.fromEntries(HUB_ORDER.map((id) => [id, SCENARIOS[id].speed.def])) as Record<
     ScenarioId,
     number
@@ -135,6 +170,7 @@ export const useDrive = create<DriveSettings>()((set, get) => ({
   camera: 'chase',
   playing: true,
   rate: 1,
+  autoSlow: true,
   esc: false,
   forces: false,
   runId: 0,
@@ -146,9 +182,12 @@ export const useDrive = create<DriveSettings>()((set, get) => ({
       compare: SCENARIOS[scenario].baseline ? get().compare : 'layouts',
     }),
   setSpeed: (kmh) => set({ speed: { ...get().speed, [get().scenario]: kmh } }),
-  toggleGhost: (car, f) => {
-    const now = resolveGhosts(car, get().ghosts).map(familyOf);
+  toggleGhost: (car, f, picked = []) => {
+    const now = standInFamilies(car, get().ghosts, picked);
     set({ ghosts: now.includes(f) ? now.filter((x) => x !== f) : [...now, f] });
+  },
+  keepStandIns: (car) => {
+    if (get().ghosts === null) set({ ghosts: autoFamilies(car) });
   },
   restart: () => set({ runId: get().runId + 1, playing: true }),
 }));
@@ -205,10 +244,16 @@ export const drivePlayback = {
   seek: null as number | null,
   /** the manoeuvre's steps on the timeline: when the visitor's car got there (s, NaN before) */
   marks: [] as { t: number; label: string; kind: Mark['kind']; holdS?: number }[],
+  /** the moment the scenario turns on, pinned on the timeline (null until known) */
+  key: null as KeyMoment | null,
+  /** playing slowed down by itself around the key moment right now */
+  slow: false,
 };
 
 export function resetTelemetry() {
   driveTelemetry.spun = false;
   drivePlayback.t = 0;
   drivePlayback.eventT = NaN;
+  drivePlayback.key = null;
+  drivePlayback.slow = false;
 }

@@ -9,7 +9,7 @@ import type { Group } from 'three';
 import { Assembly } from '../scene/Assembly';
 import { ghostMat, sysMat } from '../scene/materials';
 import type { System } from '../scene/palette';
-import { Part } from '../scene/Part';
+import { Part } from './partIds';
 import type { PlacedPart, Shaft, Vec3 } from '../spec/types';
 import { mmVec } from '../spec/units';
 import { cvBoot, G, span } from './geom';

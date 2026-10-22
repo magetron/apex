@@ -27,11 +27,14 @@ const SPEC: CornerSpec = {
 
 export const powerExit: ScenarioDef = {
   id: 'power-exit',
+  question: 'What does the throttle do on exit?',
   label: 'Power out',
   short: 'Power',
   title: 'Mid-corner, the same throttle for every car, steering held',
   speed: { min: 30, max: 60, def: 46, label: 'Corner speed' },
   headline: 'lineChange',
+  // a front-driven car's fronts give up about a second after the throttle
+  key: { at: 'event', before: 0.3, after: 1.3 },
   event: 'Throttle',
   radius: SPEC.radius,
   plan: (kmh) => cornerPlan(SPEC, kmh),

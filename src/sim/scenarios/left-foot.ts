@@ -29,11 +29,13 @@ const SPEC: CornerSpec = {
 
 export const leftFoot: ScenarioDef = {
   id: 'left-foot',
-  label: 'Left-foot brake',
+  question: 'Why brake with the left foot?',
+  label: 'Left-foot braking',
   short: 'Left foot',
   title: 'Throttle held, a touch of brake mid-corner, steering held',
   speed: { min: 40, max: 60, def: 54, label: 'Corner speed' },
   headline: 'lineChange',
+  key: { at: 'event', before: 0.3, after: LFB_HOLD_S },
   event: 'Brake',
   radius: SPEC.radius,
   plan: (kmh) => cornerPlan(SPEC, kmh),

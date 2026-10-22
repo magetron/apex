@@ -39,16 +39,28 @@ export function retryModel(url: string) {
   });
 }
 
+// the models are meshopt-compressed (scripts/models/optimize.mjs); the decoder is bundled
+const withDecoder = (loader: GLTFLoader) => {
+  loader.setMeshoptDecoder(MeshoptDecoder);
+};
+
 /** The car's model scene (suspends while loading, throws if it fails). */
 export function useCarModel(id: string): Object3D {
   const url = gltfUrl(id)!;
-  return useLoader(
-    GLTFLoader,
-    url,
-    (loader) => {
-      // the models are meshopt-compressed (scripts/models/optimize.mjs); the decoder is bundled
-      loader.setMeshoptDecoder(MeshoptDecoder);
-    },
-    (e) => patch(url, { loaded: e.loaded, total: e.lengthComputable ? e.total : 0 }),
+  return useLoader(GLTFLoader, url, withDecoder, (e) =>
+    patch(url, { loaded: e.loaded, total: e.lengthComputable ? e.total : 0 }),
   ).scene;
+}
+
+const prefetched = new Set<string>();
+
+/**
+ * Start loading a car's model before it is shown (the cars either side of the current one), so
+ * switching to it is instant. Same cache as useCarModel; each URL at most once.
+ */
+export function prefetchCar(id: string) {
+  const url = gltfUrl(id);
+  if (!url || prefetched.has(url) || useModelLoad.getState()[url]) return;
+  prefetched.add(url);
+  useLoader.preload(GLTFLoader, url, withDecoder);
 }

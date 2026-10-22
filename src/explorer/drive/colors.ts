@@ -78,3 +78,33 @@ export const GHOST_COLORS: Record<Theme, Record<Family, string>> = {
     EV: '#6250d6',
   },
 };
+
+/** For a second car of a family already shown (two mid-engined cars compared, say). */
+export const EXTRA_COLORS: Record<Theme, string[]> = {
+  dark: ['#9aa6ba', '#b5835a', '#9cbf3a', '#2bb3c0'],
+  light: ['#5f6f84', '#91603a', '#6d9419', '#13919c'],
+};
+
+/**
+ * Which colour each comparison car wears, in order: 0 = its layout family's colour, k > 0 = the
+ * k-th extra colour, for a car whose family an earlier car already wears. Theme-free, so a car
+ * keeps its colour when the theme flips; the same list gives the same colours in the car view
+ * and on the road.
+ */
+export function colorSlots(families: Family[]): number[] {
+  const used = new Set<Family>();
+  let extra = 0;
+  return families.map((f) => {
+    if (!used.has(f)) {
+      used.add(f);
+      return 0;
+    }
+    return ++extra;
+  });
+}
+
+export function slotColor(f: Family, slot: number, theme: Theme): string {
+  if (!slot) return GHOST_COLORS[theme][f];
+  const list = EXTRA_COLORS[theme];
+  return list[(slot - 1) % list.length];
+}

@@ -564,6 +564,114 @@
   }
 }
 
+/* ── compare: the bar's button, a card's corner toggle, the sheet's mode ── */
+.apx-cp-vsbtn {
+  position: relative;
+  width: 36px;
+  border-left: 1px solid var(--line);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.apx-cp-vsbtn svg,
+.apx-cp-vs svg,
+.apx-cp-mode svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+.apx-cp-vsbtn[aria-pressed='true'] {
+  color: var(--accent);
+}
+.apx-cp-vsbtn small {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  font: 600 9.5px/1 var(--mono);
+  color: var(--accent);
+}
+.apx-cp-cardwrap {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+.apx-cp-cardwrap > .apx-cp-card {
+  flex: 1 1 auto;
+}
+.apx-cp-vs {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 26px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-solid);
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.apx-cp-cardwrap:is(:hover, :focus-within) .apx-cp-vs,
+.apx-cp-vs[aria-pressed='true'] {
+  opacity: 1;
+}
+.apx-cp-vs:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.apx-cp-vs[aria-pressed='true'] {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.apx-cp-vs:disabled {
+  cursor: default;
+  opacity: 0;
+}
+.apx-cp-cardwrap[data-vs='on'] > .apx-cp-card {
+  border-color: var(--accent);
+}
+/* comparing: every card is a "compare with" button, so show the toggles */
+.apx-cp[data-mode='vs'] .apx-cp-vs:not(:disabled) {
+  opacity: 1;
+}
+.apx-cp-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+/* the one-line bar on the drive dashboard */
+.apx-cp-bar.is-slim {
+  padding: 2px;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  backdrop-filter: none;
+}
+.apx-cp-bar.is-slim .apx-cp-current {
+  padding: 2px 8px;
+}
+.apx-cp-bar.is-slim .apx-cp-step {
+  width: 28px;
+}
+@media (hover: none) {
+  .apx-cp-vs {
+    opacity: 1;
+  }
+}
+
 :is(
   .apx-cp-step,
   .apx-cp-current,
@@ -571,6 +679,7 @@
   .apx-cp-chip,
   .apx-cp-clear,
   .apx-cp-card,
+  .apx-cp-vs,
   .apx-cp-search
 ):focus-visible {
   outline: 2px solid var(--accent);

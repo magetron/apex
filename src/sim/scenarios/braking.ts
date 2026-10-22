@@ -14,11 +14,14 @@ const target = { v: 0, a: 0 };
 
 export const braking: ScenarioDef = {
   id: 'braking',
+  question: 'How short can it stop?',
   label: 'Emergency stop',
   short: 'Brake',
   title: 'Full brakes from speed, ABS on',
   speed: { min: 50, max: 140, def: 100, label: 'Speed' },
   headline: 'stopDist',
+  // the load lands on the fronts within the first second
+  key: { at: 'event', before: 0.3, after: 1.2 },
   event: 'Brake',
   plan(kmh) {
     const v = kmh / 3.6;

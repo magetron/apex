@@ -1,0 +1,207 @@
+/* The info card's comparison table (theme tokens; each car's colour comes in as --sys). */
+.apx-cmp {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.apx-cmp__cars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.apx-cmp__cars li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13px;
+}
+.apx-cmp__cars li > i,
+.apx-cmp__table thead i {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--sys);
+  box-shadow: 0 0 0 1px var(--line-strong);
+}
+.apx-cmp__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.apx-cmp__cars li:first-child .apx-cmp__name {
+  font-weight: 600;
+}
+.apx-cmp__cars button,
+.apx-cmp__add {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.apx-cmp__cars button svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.apx-cmp__cars button:hover,
+.apx-cmp__add:hover {
+  color: var(--text);
+  border-color: var(--line-strong);
+  background: var(--bg-hover);
+}
+:is(.apx-cmp__cars button, .apx-cmp__add):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.apx-cmp__table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 12px;
+}
+.apx-cmp__table th,
+.apx-cmp__table td {
+  padding: 3px 4px;
+  text-align: right;
+  vertical-align: top;
+}
+.apx-cmp__table thead th {
+  padding-bottom: 2px;
+}
+.apx-cmp__table thead i {
+  display: inline-block;
+}
+.apx-cmp__table th[scope='row'] {
+  width: 74px;
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-faint);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.apx-cmp__table th[scope='row'] small {
+  margin-left: 3px;
+  font-size: 10px;
+  color: var(--text-faint);
+  opacity: 0.8;
+}
+.apx-cmp__table tbody tr + tr {
+  border-top: 1px solid var(--line);
+}
+.apx-cmp__table td b {
+  display: block;
+  font: 500 12px/1.25 var(--mono);
+  color: var(--text);
+  white-space: nowrap;
+}
+.apx-cmp__table td em {
+  display: block;
+  font: 500 10px/1.2 var(--mono);
+  font-style: normal;
+  /* neutral: more isn't better or worse by itself (more power, more mass) */
+  color: var(--accent);
+  white-space: nowrap;
+}
+.apx-cmp__table td em[data-sign='0'] {
+  color: var(--text-faint);
+}
+.apx-cmp__foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.apx-cmp__foot .apx-seg {
+  flex: 1 1 auto;
+}
+.apx-cmp__add {
+  width: auto;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12.5px;
+}
+
+@media (max-width: 760px) {
+  .apx-cmp__table th[scope='row'] {
+    width: 64px;
+  }
+}
+
+/* ── the comparison's controls, above the car picker ───────────────────── */
+.apx-cmpbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  backdrop-filter: blur(10px);
+}
+.apx-cmpbar .apx-seg {
+  flex-wrap: nowrap;
+}
+.apx-cmpbar .apx-seg button {
+  padding: 4px 8px;
+  font-size: 12.5px;
+}
+.apx-cmpbar__opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.apx-cmpbar__icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.apx-center-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+.apx-center-stack > * {
+  max-width: 100%;
+}
+@media (max-width: 760px) {
+  .apx-center-stack {
+    align-items: stretch;
+  }
+  /* icons carry the mode on a phone; the view presets keep their word */
+  .apx-cmpbar .apx-seg:first-child .apx-cmpbar__opt > span {
+    display: none;
+  }
+}

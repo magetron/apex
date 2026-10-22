@@ -3,7 +3,7 @@
  * for people" reads at a glance next to the drivetrain.
  */
 import { ghostMat } from '../scene/materials';
-import { Part } from '../scene/Part';
+import { Part } from './partIds';
 import type { PowertrainLayout, VehicleSpec } from '../spec/types';
 import { mmVec } from '../spec/units';
 import { G } from './geom';

@@ -1,8 +1,8 @@
 /**
- * Info card at the car and internals levels: facts + numbers, no prose.
- * Inside, it also carries the overlay toggles and the engine swap with its live fit check.
+ * Info card for the car view: facts + numbers, no prose. See-through, it also carries the
+ * overlay toggles and the engine swap with its live fit check; compared, a table of the cars.
  */
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { Button, Chips, Panel, Select, Stat, Stats, Tag } from '../../app/ui';
 import type { OverlayKind } from '../../content/types';
 import type { System } from '../../scene/palette';
@@ -12,7 +12,10 @@ import { layoutCode, layoutFacts, type FactKind } from '../../spec/describe';
 import type { MassProps, VehicleSpec } from '../../spec/types';
 import { checkFit, withEngine, type FitAxis } from '../../vehicle3d/fit';
 import { useVehicleOverrides } from '../../vehicle3d/store';
+import type { Go, View } from '../view';
+import { CompareTable } from './Compare';
 import '../../vehicle3d/panels.css';
+import '../explorer.css';
 
 const FACT_SYSTEM: Partial<Record<FactKind, System>> = {
   engine: 'engine',
@@ -138,12 +141,41 @@ function OverlayToggles() {
   );
 }
 
-export function CarInfo({ vehicle: base, detailed }: { vehicle: VehicleSpec; detailed: boolean }) {
+/** Rows that open in place inside the card (see-through), rather than a different card. */
+function Reveal({ open, children }: { open: boolean; children: ReactNode }) {
+  return (
+    <div className={open ? 'apx-reveal is-open' : 'apx-reveal'} inert={!open} aria-hidden={!open}>
+      <div>{children}</div>
+    </div>
+  );
+}
+
+/**
+ * One card for the car view. The basics always; see-through (`detailed`) opens the mass rows,
+ * the overlay switches and the engine swap in place. Compared with other cars, the basics become
+ * a table of every car with the differences.
+ */
+export function CarInfo({
+  vehicle: base,
+  detailed,
+  view,
+  go,
+  others,
+}: {
+  vehicle: VehicleSpec;
+  detailed: boolean;
+  /** for the comparison (switch the main car, drop one) */
+  view?: View;
+  go?: Go;
+  /** the cars it is compared with */
+  others?: VehicleSpec[];
+}) {
   const swap = useVehicleOverrides((s) => s.engineSwap[base.id]);
   const vehicle = useMemo(() => withEngine(base, detailed ? swap : null), [base, swap, detailed]);
   const m = useMemo(() => safeMass(vehicle), [vehicle]);
   const pt = vehicle.powertrain;
   const k = m ? Math.sqrt(m.izzKgM2 / m.totalKg) : 0;
+  const comparing = !!(others?.length && view && go);
   return (
     <Panel title={base.name} actions={<Tag>{layoutCode(vehicle)}</Tag>}>
       <Chips
@@ -156,25 +188,9 @@ export function CarInfo({ vehicle: base, detailed }: { vehicle: VehicleSpec; det
         }))}
       />
       {m && <SplitBar frontPct={m.frontPct} />}
-      {detailed && m && (
-        <Stats>
-          <Stat label="Kerb" value={Math.round(m.totalKg)} unit="kg" />
-          <Stat label="CG height" value={Math.round(m.cgMm[1])} unit="mm" />
-          <Stat
-            label="Yaw inertia"
-            value={Math.round(m.izzKgM2)}
-            unit="kg·m²"
-            title="resistance to turning (polar moment)"
-          />
-          <Stat
-            label="Gyration"
-            value={k.toFixed(2)}
-            unit="m"
-            title="radius of gyration √(Izz/m): the dumbbell half-length"
-          />
-        </Stats>
-      )}
-      {!detailed && (
+      {comparing ? (
+        <CompareTable view={view!} go={go!} vehicle={base} others={others!} />
+      ) : (
         <Stats>
           <Stat label="Wheelbase" value={base.dims.wheelbaseMm} unit="mm" />
           <Stat label="Length" value={base.dims.lengthMm} unit="mm" />
@@ -189,8 +205,27 @@ export function CarInfo({ vehicle: base, detailed }: { vehicle: VehicleSpec; det
           )}
         </Stats>
       )}
-      {detailed && <OverlayToggles />}
-      {detailed && <EngineSwap vehicle={base} />}
+      <Reveal open={detailed}>
+        {m && (
+          <Stats>
+            {!comparing && <Stat label="CG height" value={Math.round(m.cgMm[1])} unit="mm" />}
+            <Stat
+              label="Yaw inertia"
+              value={Math.round(m.izzKgM2)}
+              unit="kg·m²"
+              title="resistance to turning (polar moment)"
+            />
+            <Stat
+              label="Gyration"
+              value={k.toFixed(2)}
+              unit="m"
+              title="radius of gyration √(Izz/m): the dumbbell half-length"
+            />
+          </Stats>
+        )}
+        <OverlayToggles />
+        <EngineSwap vehicle={base} />
+      </Reveal>
     </Panel>
   );
 }

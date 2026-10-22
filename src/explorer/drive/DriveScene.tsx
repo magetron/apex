@@ -16,11 +16,13 @@ import { SCENARIOS } from '../../sim/scenarios';
 import type { VehicleSpec } from '../../spec/types';
 import { useDriveCamera } from './camera';
 import { DRIVE_COLORS } from './colors';
+import { LoadBars, WatchRing } from './Cues';
 import { Forces } from './Forces';
 import { Hands, useDriveKeys } from './input';
+import { autoRate, findKey, type KeyMoment } from './key';
 import { Lane } from './lanes';
 import { balanceOf, LaneCar, LetGoPin } from './LaneCar';
-import { buildLineup, laneColor, useDriveResults, type ResultRow } from './lineup';
+import { buildLineup, laneColor, laneResult, shortName, useDriveResults } from './lineup';
 import { Marks } from './Marks';
 import { Road } from './Road';
 import { drivePlayback, driveTelemetry, resetTelemetry, useDrive } from './state';
@@ -36,24 +38,19 @@ const FADE = 0.3;
 const LIVE_MAX_STEPS = 48;
 const DEG = 180 / Math.PI;
 const pt: Ground = { x: 0, z: 0 };
+const NONE: readonly string[] = [];
 
-/** Each lane's result for the info card, from what it drove. */
-function resultOf(lane: Lane, label?: string): ResultRow {
-  const def = SCENARIOS[lane.plan.id];
-  const res = lane.plan.summarize(lane.rec.toTrace(2), lane.p);
-  res.spun = res.spun || lane.run.st.spun;
-  return {
-    key: `${lane.info.kind}:${lane.info.code}:${lane.info.name}`,
-    info: lane.info,
-    label,
-    value: res.values[res.headline] ?? NaN,
-    spun: res.spun,
-    verdict: def.verdict?.(res) ?? null,
-    letGo: lane.letGo ? { axle: lane.letGo.axle, g: lane.letGo.g } : null,
-  };
-}
+/** "718", "F8", "M3": the model without its make, for a label on the road */
+const modelTag = (v: VehicleSpec) => shortName(v).split(' ').slice(1, 2).join(' ');
 
-export function DriveScene({ vehicle }: { vehicle: VehicleSpec }) {
+export function DriveScene({
+  vehicle,
+  picked = NONE,
+}: {
+  vehicle: VehicleSpec;
+  /** the cars the visitor picked to compare with (vehicle ids) */
+  picked?: readonly string[];
+}) {
   const theme = useTheme((s) => s.theme);
   const colors = DRIVE_COLORS[theme];
   const scenario = useDrive((s) => s.scenario);
@@ -66,10 +63,22 @@ export function DriveScene({ vehicle }: { vehicle: VehicleSpec }) {
   const mode = useDrive((s) => s.mode);
   const cameraMode = useDrive((s) => s.camera);
 
+  const pickKey = picked.join(',');
   const lineup = useMemo(
-    () => buildLineup(vehicle, { scenario, ghosts, compare }, kmh),
-    [vehicle, scenario, ghosts, compare, kmh],
+    () => buildLineup(vehicle, { scenario, ghosts, compare }, kmh, picked),
+    // picked by value (a new array each render)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [vehicle, scenario, ghosts, compare, kmh, pickKey],
   );
+  // two cars of one layout on the road: name them, the code alone doesn't tell them apart
+  const tags = useMemo(() => {
+    const codes = lineup.map((e) => e.info.code);
+    return lineup.map((e) =>
+      codes.filter((c) => c === e.info.code).length > 1
+        ? `${e.info.code} ${modelTag(e.vehicle)}`
+        : undefined,
+    );
+  }, [lineup]);
   const build = useRef(0);
   const lanes = useMemo(() => {
     build.current++;
@@ -85,6 +94,8 @@ export function DriveScene({ vehicle }: { vehicle: VehicleSpec }) {
     () => ({ hold: 0, since: 99, ended: false, gear: { gear: 1 }, mode: 'watch' as string }),
     [],
   );
+  /** the moment the scenario turns on (slow motion, rings, the pin on the timeline) */
+  const focus = useMemo(() => ({ key: null as KeyMoment | null }), []);
 
   /** Run every lane from the start: scripted ones to the end at once, the visitor's live. */
   const start = useCallback(
@@ -102,6 +113,8 @@ export function DriveScene({ vehicle }: { vehicle: VehicleSpec }) {
         l.reset();
         if (!l.run.manual) l.simTo(l.plan.duration + 1);
       }
+      focus.key = findKey(SCENARIOS[main.plan.id], lanes, live);
+      drivePlayback.key = focus.key;
       drivePlayback.duration = main.plan.duration;
       drivePlayback.marks = main.marks.map((m) => ({
         t: NaN,
@@ -120,15 +133,18 @@ export function DriveScene({ vehicle }: { vehicle: VehicleSpec }) {
                 spun: false,
                 verdict: null,
                 letGo: null,
+                outcome: null,
               }
-            : resultOf(l, lineup[i].label),
+            : laneResult(l, lineup[i].label),
         ),
       });
     },
-    [lanes, main, lineup, hands, clock, epoch, loop],
+    [lanes, main, lineup, hands, clock, epoch, loop, focus],
   );
 
   useEffect(() => {
+    // new cars, or a restart: the takeaway waits for the end of this run
+    useDriveResults.setState({ revealed: false });
     start(useDrive.getState().mode === 'drive');
   }, [start]);
 
@@ -144,14 +160,19 @@ export function DriveScene({ vehicle }: { vehicle: VehicleSpec }) {
     if (clock.now < main.head - 1e-3) main.redriveTo(clock.now);
     hands.from(main.run.st);
     main.run.manual = hands;
+    // the visitor's car is no longer the script's: no ring on it, no slowing down for it
+    focus.key = findKey(SCENARIOS[main.plan.id], lanes, true);
+    drivePlayback.key = focus.key;
     for (let i = 0; i < drivePlayback.marks.length; i++)
       drivePlayback.marks[i].t = main.markT[i] <= clock.now ? main.markT[i] : NaN;
     const rows = useDriveResults.getState().rows;
     if (rows)
       useDriveResults.setState({
-        rows: rows.map((r, i) => (i === 0 ? { ...r, value: NaN, verdict: null, letGo: null } : r)),
+        rows: rows.map((r, i) =>
+          i === 0 ? { ...r, value: NaN, verdict: null, letGo: null, outcome: null } : r,
+        ),
       });
-  }, [mode, main, hands, clock, loop, start]);
+  }, [mode, main, hands, clock, loop, start, focus, lanes]);
 
   useDriveKeys(
     useCallback(() => {
@@ -184,8 +205,11 @@ export function DriveScene({ vehicle }: { vehicle: VehicleSpec }) {
 
   useFrame((_, frameDt) => {
     const dt = Math.min(frameDt, 0.1);
-    const { playing, rate, mode: who } = useDrive.getState();
+    const { playing, rate, autoSlow, mode: who } = useDrive.getState();
     const live = who === 'drive' && !!main.run.manual;
+    // slow motion by itself round the key moment, unless the visitor picked a rate or drives
+    const auto = autoSlow && !live;
+    const pace = auto ? autoRate(focus.key, clock.now) : rate;
     const dur = main.plan.duration;
     const pb = drivePlayback;
 
@@ -199,7 +223,7 @@ export function DriveScene({ vehicle }: { vehicle: VehicleSpec }) {
       if (!loop.ended) {
         // the visitor's hands only count at the live edge (behind it is a replay)
         if (live && clock.now >= main.head - 1e-6) hands.update(dt, main.p, main.run.st);
-        clock.now = Math.min(dur, clock.now + dt * rate);
+        clock.now = Math.min(dur, clock.now + dt * pace);
       } else {
         loop.hold += dt;
         if (loop.hold > LOOP_HOLD) {
@@ -217,9 +241,10 @@ export function DriveScene({ vehicle }: { vehicle: VehicleSpec }) {
     if (playing && !loop.ended && clock.now >= dur - 1e-6) {
       loop.ended = true;
       loop.hold = 0;
+      if (!useDriveResults.getState().revealed) useDriveResults.setState({ revealed: true });
       if (live) {
         // the visitor's own run, judged like the scripted ones
-        const row = resultOf(main);
+        const row = laneResult(main);
         const rows = useDriveResults.getState().rows;
         if (rows) useDriveResults.setState({ rows: rows.map((r, i) => (i === 0 ? row : r)) });
       }
@@ -269,6 +294,7 @@ export function DriveScene({ vehicle }: { vehicle: VehicleSpec }) {
     tel.spun = st.spun;
     pb.t = clock.now;
     pb.duration = dur;
+    pb.slow = auto && playing && !loop.ended && pace < 0.98;
     pb.head = live ? main.head : dur;
     for (let i = 0; i < pb.marks.length; i++) {
       const tm = main.markT[i];
@@ -294,6 +320,24 @@ export function DriveScene({ vehicle }: { vehicle: VehicleSpec }) {
         />
       ))}
       {lanes.map((l, i) => (
+        <LoadBars
+          key={`l${k}-${i}`}
+          lane={l}
+          colors={colors}
+          color={laneColor(l.info, colors, theme)}
+          main={i === 0}
+        />
+      ))}
+      {lanes.map((l, i) => (
+        <WatchRing
+          key={`w${k}-${i}`}
+          lane={l}
+          t={clock}
+          color={laneColor(l.info, colors, theme)}
+          size={i === 0 ? 2.6 : 1.8}
+        />
+      ))}
+      {lanes.map((l, i) => (
         <Balance
           key={`b${k}-${i}`}
           lane={l}
@@ -309,7 +353,7 @@ export function DriveScene({ vehicle }: { vehicle: VehicleSpec }) {
           key={`c${k}-${i}`}
           lane={l}
           color={laneColor(l.info, colors, theme)}
-          label={lineup[i + 1]?.label}
+          label={lineup[i + 1]?.label ?? tags[i + 1]}
         />
       ))}
       {lanes.map((l, i) => (

@@ -1,16 +1,18 @@
 /**
- * #/dev/drive — every driving technique at once, for one car and the stand-ins of the other
- * layouts: each technique's corner from above with every car's line through the event (the
- * same picture as the drive mode's overhead view), its headline number, its verdict and which
- * axle let go first. Click a technique to open it in the explorer's drive mode.
+ * #/dev/drive — every scenario at once, for one car and the stand-ins of the other layouts, in
+ * the hub's order: the question it answers, its corner from above with every car's line through
+ * the event (the same picture as the drive mode's overhead view), the takeaway the drive mode
+ * shows at the end of the run (the lesson and a line per car, derived from these results), and
+ * the numbers behind it. Click a question to open it in the explorer's drive mode.
  */
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { href } from '../app/routes';
 import { Panel, Select } from '../app/ui';
 import { DRIVE_COLORS } from '../explorer/drive/colors';
 import { Lane } from '../explorer/drive/lanes';
-import { buildLineup, laneColor } from '../explorer/drive/lineup';
+import { buildLineup, laneColor, laneResult } from '../explorer/drive/lineup';
 import { useDrive } from '../explorer/drive/state';
+import { carLine, lesson, toneOf } from '../explorer/drive/takeaway';
 import { viewPath } from '../explorer/view';
 import { useTheme } from '../scene/theme';
 import { HUB_ORDER, METRICS, SCENARIOS, VERDICTS, type ScenarioId } from '../sim/scenarios';
@@ -139,25 +141,44 @@ export function Overlay() {
         alignItems: 'start',
       }}
     >
-      <Panel title="Driving techniques">
+      <Panel title="Drive: questions and takeaways">
         <Select label="Car" value={vehicleId} options={options} onChange={setVehicleId} />
       </Panel>
       {rows.map((row) => {
         const def = SCENARIOS[row.id];
         const metric = METRICS[def.headline];
+        const cars = row.lanes.map((l, i) => laneResult(l, row.labels[i]).outcome!);
         return (
-          <Panel
-            key={row.id}
-            title={
-              <a
-                href={href(viewPath({ vehicleId, level: 'drive' }))}
-                onClick={() => useDrive.getState().setScenario(row.id)}
-              >
-                {def.label}
-              </a>
-            }
-          >
+          <Panel key={row.id} className="apx-drive-info">
+            <header className="apx-drive-q">
+              <h2>
+                <a
+                  href={href(viewPath({ vehicleId, level: 'drive' }))}
+                  onClick={() => useDrive.getState().setScenario(row.id)}
+                >
+                  {HUB_ORDER.indexOf(row.id) + 1}. {def.question}
+                </a>
+              </h2>
+              <span>{def.label}</span>
+            </header>
             <Lines row={row} />
+            <p className="apx-drive-lesson">{lesson(row.id, cars, compare === 'technique')}</p>
+            <ul className="apx-drive-lines">
+              {cars.map((o, i) => (
+                <li key={i}>
+                  <i
+                    className="apx-drive-dot"
+                    style={
+                      { '--sys': laneColor(row.lanes[i].info, colors, theme) } as CSSProperties
+                    }
+                  />
+                  <b>
+                    {o.label ?? o.code} {o.model}
+                  </b>
+                  <span data-tone={toneOf(o)}>{carLine(row.id, o)}</span>
+                </li>
+              ))}
+            </ul>
             <table className="apx-drive-table">
               <tbody>
                 {row.lanes.map((l, i) => {

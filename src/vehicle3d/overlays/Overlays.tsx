@@ -7,7 +7,7 @@ import { useEffect, useMemo } from 'react';
 import { BufferGeometry, Float32BufferAttribute, type Material } from 'three';
 import type { OverlayKind } from '../../content/types';
 import { SYSTEM_COLORS } from '../../scene/palette';
-import { Part } from '../../scene/Part';
+import { Part } from '../partIds';
 import type { MassProps, PlacedPart, PowertrainLayout, Vec3, VehicleSpec } from '../../spec/types';
 import { DEG, mm, mmVec } from '../../spec/units';
 import { checkFit, type FitStatus } from '../fit';

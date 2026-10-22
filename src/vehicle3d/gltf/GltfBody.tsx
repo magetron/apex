@@ -7,6 +7,7 @@
  *  - inside: every body mesh in the shared x-ray ghost (the interior hidden), so the drivetrain
  *    shows through exactly as it does with the procedural shell
  */
+import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import {
   MeshStandardMaterial,
@@ -16,10 +17,12 @@ import {
   Vector3,
   type Material,
   type Mesh,
+  type Object3D,
 } from 'three';
 import type { Vec3 } from '../../spec/types';
 import { sysMat } from '../../scene/materials';
 import { bodyGhost, drivenMat } from '../materials';
+import type { SeeFade } from '../seeFade';
 import { useSpin } from '../spin';
 import { markReady, useCarModel } from './load';
 import { gltfUrl } from './manifest';
@@ -94,15 +97,71 @@ const OWN_FINISH = /black|trim|satin|piano|opaque|cloth|chrome/i;
 /** a light-glow card: a halo on black (with its texture), meant to be added over the lamp */
 const GLOW_CARD = /glow|flare/i;
 
+/**
+ * The painted body's fade-out copies of its materials: transparent, at the body's own opacity
+ * times (1 − fade). Only worn while fading (an opaque material renders faster and sorts right).
+ */
+function useBodyFade(body: Object3D | null, fade: SeeFade | undefined, exterior: boolean) {
+  const twins = useMemo(() => {
+    if (!body || !fade || !exterior) return null;
+    const meshes: Mesh[] = [];
+    const rest: Material[] = [];
+    const swap: Material[] = [];
+    const made = new Map<Material, Material>();
+    const fades: { m: Material; opacity: number }[] = [];
+    body.traverse((o) => {
+      const m = o as Mesh;
+      if (!m.isMesh || !m.visible) return;
+      const mat = m.material as Material;
+      let t = made.get(mat);
+      if (!t) {
+        t = mat.clone();
+        t.transparent = true;
+        made.set(mat, t);
+        fades.push({ m: t, opacity: mat.opacity });
+      }
+      meshes.push(m);
+      rest.push(mat);
+      swap.push(t);
+    });
+    return { meshes, rest, swap, fades, worn: false, frame: 0 };
+  }, [body, fade, exterior]);
+  useEffect(() => () => twins?.fades.forEach((f) => f.m.dispose()), [twins]);
+  useFrame(() => {
+    if (!body || !fade) return;
+    const k = exterior ? fade.k : 1 - fade.k;
+    // the first frame wears the fade materials once (invisibly faint when see-through), so their
+    // shaders compile while the model appears rather than at the first switch
+    const warm = !!twins && twins.frame === 0;
+    body.visible = k < 1 || warm;
+    if (!twins) return;
+    const wear = (k > 0 && k < 1) || warm;
+    twins.frame++;
+    if (wear !== twins.worn) {
+      twins.worn = wear;
+      const list = wear ? twins.swap : twins.rest;
+      for (let i = 0; i < twins.meshes.length; i++) twins.meshes[i].material = list[i];
+    }
+    if (!wear) return;
+    for (const f of twins.fades) f.m.opacity = f.opacity * (1 - k);
+  });
+}
+
 export function GltfBody({
   id,
   paint,
   exterior,
+  fade,
 }: {
   id: string;
   /** the car's colour (spec), for a body paint the model lost */
   paint: string;
   exterior: boolean;
+  /**
+   * The see-through crossfade: the painted body (exterior) fades out as it rises, the x-ray one
+   * (not exterior) shows while it is above 0. Without it the body is simply shown.
+   */
+  fade?: SeeFade;
 }) {
   const model = useCarModel(id);
   const body = useMemo(() => {
@@ -148,6 +207,7 @@ export function GltfBody({
     });
     return g;
   }, [model, paint, exterior]);
+  useBodyFade(body, fade, exterior);
   // the explorer's progress bar and camera wait for this
   useEffect(() => markReady(gltfUrl(id)!), [id]);
   return body ? <primitive object={body} /> : null;
@@ -210,7 +270,8 @@ export function GltfWheel({
     });
     // calipers hang on the upright: they stay put while the wheel turns
     const fixed = new Group();
-    fixed.add(...calipers);
+    // (add() with no argument logs an error: most models have no separate calipers)
+    if (calipers.length) fixed.add(...calipers);
     g.userData.fixed = fixed;
     return g;
     // the layout position only matters when the model or car changes

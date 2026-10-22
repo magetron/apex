@@ -1,18 +1,20 @@
 /**
- * Drive-mode info card (top right): what this scenario is (its steps, the current one lit), the
- * visitor's car's balance right now (front vs rear slip angle, grip in use, load on each axle),
- * and how every car came out of it: the scenario's headline number, a one-word verdict and
- * which axle let go first. Live values are polled from driveTelemetry and written straight to the
- * DOM (no React re-render per frame).
+ * Drive-mode info card (top right): the question the scenario answers and the technique that
+ * answers it, its steps (the current one lit), the visitor's car's balance right now (front vs
+ * rear slip angle, grip in use, load on each axle), and, once the run reaches its end, the
+ * takeaway: one lesson for the scenario and one line per car, both derived from the results
+ * (takeaway.ts). Live values are polled from driveTelemetry and written straight to the DOM (no
+ * React re-render per frame).
  */
 import { useEffect, useRef, type CSSProperties, type RefObject } from 'react';
 import { Panel } from '../../app/ui';
 import { useTheme } from '../../scene/theme';
-import { METRICS, SCENARIOS, VERDICTS } from '../../sim/scenarios';
+import { SCENARIOS } from '../../sim/scenarios';
 import type { VehicleSpec } from '../../spec/types';
 import { DRIVE_COLORS } from './colors';
 import { laneColor, useDriveResults } from './lineup';
 import { drivePlayback, driveTelemetry, useDrive } from './state';
+import { carLine, lesson, modelName, toneOf } from './takeaway';
 import './drive.css';
 
 /** slip angle that fills a bar (deg) */
@@ -200,56 +202,51 @@ export function DriveInfo({ vehicle }: { vehicle: VehicleSpec }) {
   const scenario = useDrive((s) => s.scenario);
   const mode = useDrive((s) => s.mode);
   const def = SCENARIOS[scenario];
-  const { rows, metric: metricId } = useDriveResults();
-  const metric = METRICS[metricId];
+  const { rows, revealed } = useDriveResults();
   const theme = useTheme((s) => s.theme);
   const colors = DRIVE_COLORS[theme];
+  const you = mode === 'drive';
+  // the lesson is about how the cars came out of the script; the visitor's own run gets a line
+  const cars = (rows ?? [])
+    .filter((_, i) => !(i === 0 && you))
+    .flatMap((r) => (r.outcome ? [r.outcome] : []));
+  const twin = rows?.[1]?.info.kind === 'twin';
+  const text = revealed && cars.length ? lesson(scenario, cars, twin) : '';
 
   return (
-    <Panel title={def.label} className="apx-drive-info">
+    <Panel className={`apx-drive-info${revealed ? ' is-revealed' : ''}`}>
+      <header className="apx-drive-q" title={def.title}>
+        <h2>{def.question}</h2>
+        <span>{def.label}</span>
+      </header>
       <Steps />
       <Live />
-      <div className="apx-field">
-        <span>{metric.label}</span>
+      <div className="apx-drive-take" aria-live="polite">
+        {text && <p className="apx-drive-lesson">{text}</p>}
         {rows ? (
-          <table className="apx-drive-table">
-            <tbody>
-              {rows.map((r, i) => {
-                const color = laneColor(r.info, colors, theme);
-                const v = VERDICTS[r.verdict ?? 'neutral'];
-                const you = i === 0 && mode === 'drive';
-                return (
-                  <tr
-                    key={r.key}
-                    style={{ color: i === 0 ? 'var(--text)' : 'var(--text-muted)' }}
-                    title={
-                      r.letGo
-                        ? `${r.letGo.axle === 'rear' ? 'Rear' : 'Front'} axle let go first, at ${r.letGo.g.toFixed(2)} g`
-                        : undefined
-                    }
-                  >
-                    <td>
-                      <i className="apx-drive-dot" style={{ '--sys': color } as CSSProperties} />
-                      {r.label ?? r.info.code}
-                    </td>
-                    <td className="is-name">{you ? 'You' : r.info.name || vehicle.name}</td>
-                    <td className="is-num">
-                      {r.spun || !Number.isFinite(r.value)
-                        ? '–'
-                        : `${r.value > 0 && metric.unit === '%' ? '+' : ''}${r.value.toFixed(metric.digits)}${metric.unit ? ` ${metric.unit}` : ''}`}
-                    </td>
-                    <td>
-                      {r.verdict && (
-                        <span className="apx-drive-verdict" data-tone={v.tone}>
-                          {v.label}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <ul className="apx-drive-lines">
+            {rows.map((r, i) => {
+              const o = r.outcome;
+              const name =
+                i === 0 && you
+                  ? 'You'
+                  : `${r.label ?? r.info.code} ${modelName(r.info.name || vehicle.name)}`;
+              return (
+                <li key={r.key} title={r.info.name || vehicle.name}>
+                  <i
+                    className="apx-drive-dot"
+                    style={{ '--sys': laneColor(r.info, colors, theme) } as CSSProperties}
+                  />
+                  <b>{name}</b>
+                  {revealed && o ? (
+                    <span data-tone={toneOf(o)}>{carLine(scenario, o)}</span>
+                  ) : (
+                    <span className="apx-muted">…</span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         ) : (
           <span className="apx-muted">…</span>
         )}

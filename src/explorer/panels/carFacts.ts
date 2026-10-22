@@ -36,6 +36,9 @@ export interface CarFacts {
   /** static front axle share, 0..100 */
   frontPct: number;
   lengthMm: number;
+  wheelbaseMm: number;
+  /** centre of gravity above the ground (mm); null when the spec has no mass model */
+  cgMm: number | null;
 }
 
 const PLACE_OF = {
@@ -80,13 +83,13 @@ export function carFacts(v: VehicleSpec): CarFacts {
   const hit = cache.get(v);
   if (hit) return hit;
   const pt = v.powertrain;
-  let mass: { kg: number; frontPct: number };
+  let mass: { kg: number; frontPct: number; cg: number | null };
   try {
     const m = massProps(v);
-    mass = { kg: m.totalKg, frontPct: m.frontPct };
+    mass = { kg: m.totalKg, frontPct: m.frontPct, cg: m.cgMm[1] };
   } catch {
     // a spec massProps rejects still has its published figures
-    mass = { kg: v.published.curbKg, frontPct: v.published.frontPct };
+    mass = { kg: v.published.curbKg, frontPct: v.published.frontPct, cg: null };
   }
   let places: Place[];
   let kw: number;
@@ -124,6 +127,8 @@ export function carFacts(v: VehicleSpec): CarFacts {
     kwPerT: (kw / mass.kg) * 1000,
     frontPct: mass.frontPct,
     lengthMm: v.dims.lengthMm,
+    wheelbaseMm: v.dims.wheelbaseMm,
+    cgMm: mass.cg,
   };
   cache.set(v, f);
   return f;
@@ -316,4 +321,110 @@ export function deltas(f: CarFacts, cur: CarFacts): Record<DeltaKey, Delta> {
     length: delta((f.lengthMm - cur.lengthMm) / 1000, 2, ''),
     front: delta(f.frontPct - cur.frontPct, 1, ' pt'),
   };
+}
+
+// ── a few cars side by side ────────────────────────────────────────────────────────────
+
+export interface CompareRow {
+  key: string;
+  label: string;
+  unit: string;
+  title: string;
+  /** the main car's value first, then each compared car's */
+  values: string[];
+  /** each compared car minus the main one; null for text rows (layout, engine) */
+  deltas: (Delta | null)[];
+}
+
+interface NumRow {
+  key: string;
+  label: string;
+  unit: string;
+  title: string;
+  get: (f: CarFacts) => number | null;
+  digits: number;
+  deltaUnit?: string;
+}
+
+const NUM_ROWS: NumRow[] = [
+  { key: 'kw', label: 'Power', unit: 'kW', title: 'Peak power', get: (f) => f.kw, digits: 0 },
+  { key: 'kg', label: 'Mass', unit: 'kg', title: 'Kerb mass', get: (f) => f.kg, digits: 0 },
+  {
+    key: 'kwPerT',
+    label: 'kW/t',
+    unit: '',
+    title: 'Power to weight',
+    get: (f) => f.kwPerT,
+    digits: 0,
+  },
+  {
+    key: 'front',
+    label: 'Front',
+    unit: '%',
+    title: 'Static load on the front axle',
+    get: (f) => f.frontPct,
+    digits: 1,
+    deltaUnit: ' pt',
+  },
+  {
+    key: 'cg',
+    label: 'CG',
+    unit: 'mm',
+    title: 'Centre of gravity above the ground',
+    get: (f) => f.cgMm,
+    digits: 0,
+  },
+  {
+    key: 'wheelbase',
+    label: 'Wheelbase',
+    unit: 'mm',
+    title: 'Front to rear axle',
+    get: (f) => f.wheelbaseMm,
+    digits: 0,
+  },
+  {
+    key: 'length',
+    label: 'Length',
+    unit: 'mm',
+    title: 'Bumper to bumper',
+    get: (f) => f.lengthMm,
+    digits: 0,
+  },
+];
+
+/** "Flat-6", "2 motors": the power unit in a word or two */
+const unitShort = (f: CarFacts) => f.cyl ?? f.unit.split(' · ')[0];
+
+/** The main car and the cars it is compared with, row by row, with signed differences. */
+export function compareRows(main: CarFacts, others: CarFacts[]): CompareRow[] {
+  const all = [main, ...others];
+  const text = (key: string, label: string, title: string, get: (f: CarFacts) => string) => ({
+    key,
+    label,
+    unit: '',
+    title,
+    values: all.map(get),
+    deltas: others.map(() => null),
+  });
+  return [
+    text('layout', 'Layout', 'Where the engine sits and which wheels it drives', (f) => f.code),
+    text('unit', 'Engine', 'Engine or motors', unitShort),
+    ...NUM_ROWS.map((r) => {
+      const m = r.get(main);
+      return {
+        key: r.key,
+        label: r.label,
+        unit: r.unit,
+        title: r.title,
+        values: all.map((f) => {
+          const x = r.get(f);
+          return x === null ? '–' : x.toFixed(r.digits);
+        }),
+        deltas: others.map((f) => {
+          const x = r.get(f);
+          return x === null || m === null ? null : delta(x - m, r.digits, r.deltaUnit ?? '');
+        }),
+      };
+    }),
+  ];
 }

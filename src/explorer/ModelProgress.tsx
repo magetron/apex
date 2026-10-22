@@ -1,19 +1,28 @@
-/** A thin bar while the current car's detailed model streams in; a retry if it fails. */
+/**
+ * A thin bar while the car's detailed model (and those of the cars it is compared with) streams
+ * in; a retry if one fails.
+ */
+import { useShallow } from 'zustand/react/shallow';
 import { Button } from '../app/ui';
 import { gltfUrl } from '../vehicle3d/gltf/manifest';
-import { retryModel, useModelLoad } from '../vehicle3d/gltf/load';
+import { retryModel, useModelLoad, type ModelLoad } from '../vehicle3d/gltf/load';
 
-export function ModelProgress({ vehicleId }: { vehicleId: string }) {
-  const url = gltfUrl(vehicleId);
-  const load = useModelLoad((s) => (url ? s[url] : undefined));
-  if (!url || load?.state === 'ready') return null;
-  if (load?.state === 'failed')
+export function ModelProgress({ vehicleId, others }: { vehicleId: string; others?: string[] }) {
+  const urls = [vehicleId, ...(others ?? [])].map(gltfUrl).filter((u): u is string => !!u);
+  const loads = useModelLoad(useShallow((s) => urls.map((u) => s[u] as ModelLoad | undefined)));
+  const pending = loads.filter((l) => l?.state !== 'ready');
+  if (!pending.length) return null;
+  const failed = urls.find((_, i) => loads[i]?.state === 'failed');
+  if (failed)
     return (
       <div className="apx-model-progress is-failed" role="alert">
-        <Button onClick={() => retryModel(url)}>Retry loading the car</Button>
+        <Button onClick={() => retryModel(failed)}>Retry loading the car</Button>
       </div>
     );
-  const frac = load && load.total > 0 ? load.loaded / load.total : null;
+  // bytes over every model still coming (a prefetched one doesn't report its size)
+  const total = pending.reduce((s, l) => s + (l?.total ?? 0), 0);
+  const known = pending.every((l) => l && l.total > 0);
+  const frac = known && total > 0 ? pending.reduce((s, l) => s + l!.loaded, 0) / total : null;
   return (
     <div
       className="apx-model-progress"

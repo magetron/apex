@@ -8,19 +8,44 @@ import { Segmented, Slider, Toggle } from '../../app/ui';
 import { useTheme } from '../../scene/theme';
 import { HUB_ORDER, SCENARIOS, type ScenarioId } from '../../sim/scenarios';
 import type { VehicleSpec } from '../../spec/types';
-import { GHOST_COLORS } from './colors';
+import { layoutCode } from '../../spec/describe';
+import { openPicker } from '../panels/CarPicker';
+import { MAX_VS, type Go, type View } from '../view';
+import { colorSlots, GHOST_COLORS, slotColor } from './colors';
+import { openLegend } from './Legend';
 import {
   FAMILIES,
   familyOf,
   gripShare,
+  lineupGhosts,
   representative,
-  resolveGhosts,
+  standInFamilies,
   useDrive,
+  type Family,
   type CameraMode,
   type Compare,
   type DriveMode,
 } from './state';
 import './drive.css';
+
+const NONE: readonly string[] = [];
+
+const HELP = (
+  <svg
+    viewBox="0 0 24 24"
+    width="16"
+    height="16"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.2"
+    strokeLinecap="round"
+    aria-hidden
+  >
+    <circle cx="12" cy="12" r="9" />
+    <path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.6" />
+    <path d="M12 17h.01" strokeWidth="3" />
+  </svg>
+);
 
 const GEAR = (
   <svg
@@ -58,7 +83,24 @@ function Keys() {
   );
 }
 
-export function DriveControls({ vehicle }: { vehicle: VehicleSpec }) {
+/** "718", "F8": the model without its make */
+const modelTag = (name: string) =>
+  name
+    .replace(/\s*\(.*\)$/, '')
+    .split(' ')
+    .slice(1)
+    .join(' ');
+
+export function DriveControls({
+  vehicle,
+  view,
+  go,
+}: {
+  vehicle: VehicleSpec;
+  /** the URL view: its `vs` are the cars the visitor picked to drive against */
+  view?: View;
+  go?: Go;
+}) {
   const d = useDrive();
   const theme = useTheme((s) => s.theme);
   const [open, setOpen] = useState(false);
@@ -66,8 +108,18 @@ export function DriveControls({ vehicle }: { vehicle: VehicleSpec }) {
   const kmh = d.speed[d.scenario];
   const share = gripShare(d.scenario, kmh);
   const own = familyOf(vehicle);
-  const shown = resolveGhosts(vehicle, d.ghosts).map(familyOf);
+  const picked = view?.vs ?? NONE;
+  // every car on the road, each in the colour its lane wears
+  const lineup = lineupGhosts(vehicle, d.ghosts, picked);
+  const slots = colorSlots(lineup.map(familyOf));
+  const colorOf = (i: number) => slotColor(familyOf(lineup[i]), slots[i], theme);
+  const shown = standInFamilies(vehicle, d.ghosts, picked);
+  const standInColor = (f: Family) => {
+    const i = lineup.findIndex((v) => !picked.includes(v.id) && familyOf(v) === f);
+    return i < 0 ? GHOST_COLORS[theme][f] : colorOf(i);
+  };
   const families = FAMILIES.filter((f) => f !== own && representative(f, vehicle));
+  const drop = (id: string) => view && go?.({ ...view, vs: picked.filter((x) => x !== id) });
 
   return (
     <div className={`apx-drive-hub${open ? ' is-open' : ''}`}>
@@ -85,6 +137,15 @@ export function DriveControls({ vehicle }: { vehicle: VehicleSpec }) {
         </div>
         <button
           type="button"
+          className="apx-drive-iconbtn"
+          aria-label="How to read this"
+          title="How to read this"
+          onClick={openLegend}
+        >
+          {HELP}
+        </button>
+        <button
+          type="button"
           className="apx-drive-iconbtn apx-drive-gear"
           aria-label="More settings"
           aria-expanded={open}
@@ -94,29 +155,35 @@ export function DriveControls({ vehicle }: { vehicle: VehicleSpec }) {
         </button>
       </div>
       {d.mode === 'drive' && <Keys />}
-      <div className="apx-drive-techs" role="radiogroup" aria-label="Technique">
-        {HUB_ORDER.map((id) => (
+      <div className="apx-drive-techs" role="radiogroup" aria-label="Question">
+        {HUB_ORDER.map((id, i) => (
           <button
             key={id}
             type="button"
             role="radio"
             aria-checked={id === d.scenario}
-            title={SCENARIOS[id].title}
+            title={`${SCENARIOS[id].label}: ${SCENARIOS[id].title}`}
             onClick={() => d.setScenario(id)}
           >
-            {SCENARIOS[id].label}
+            <span className="apx-drive-techs__n" aria-hidden>
+              {i + 1}
+            </span>
+            <span className="apx-drive-techs__q">{SCENARIOS[id].question}</span>
+            {id === d.scenario && (
+              <span className="apx-drive-techs__how">{SCENARIOS[id].label}</span>
+            )}
           </button>
         ))}
       </div>
       <select
         className="apx-select apx-drive-select"
-        aria-label="Technique"
+        aria-label="Question"
         value={d.scenario}
         onChange={(e) => d.setScenario(e.target.value as ScenarioId)}
       >
-        {HUB_ORDER.map((id) => (
+        {HUB_ORDER.map((id, i) => (
           <option key={id} value={id}>
-            {SCENARIOS[id].label}
+            {`${i + 1}. ${SCENARIOS[id].question}`}
           </option>
         ))}
       </select>
@@ -139,7 +206,7 @@ export function DriveControls({ vehicle }: { vehicle: VehicleSpec }) {
             value={d.compare}
             onChange={(compare) => useDrive.setState({ compare })}
             options={[
-              { value: 'layouts', label: 'Other layouts' },
+              { value: 'layouts', label: 'Other cars' },
               { value: 'technique', label: def.baseline.label, title: 'The same car without it' },
             ]}
           />
@@ -153,16 +220,49 @@ export function DriveControls({ vehicle }: { vehicle: VehicleSpec }) {
                 role="checkbox"
                 aria-checked={shown.includes(f)}
                 title={representative(f, vehicle)!.name}
-                onClick={() => d.toggleGhost(vehicle, f)}
+                onClick={() => d.toggleGhost(vehicle, f, picked)}
               >
                 <i
                   className="apx-drive-dot"
-                  style={{ '--sys': GHOST_COLORS[theme][f] } as CSSProperties}
+                  style={{ '--sys': standInColor(f) } as CSSProperties}
                   aria-hidden
                 />
                 {f}
               </button>
             ))}
+          </div>
+        )}
+        {(d.compare === 'layouts' || !def.baseline) && view && (
+          <div className="apx-drive-picks" role="group" aria-label="Cars picked to compare">
+            {lineup.map((v, i) =>
+              picked.includes(v.id) ? (
+                <button
+                  key={v.id}
+                  type="button"
+                  className="apx-drive-pick"
+                  title={`${v.name} · click to remove`}
+                  aria-label={`Remove ${v.name}`}
+                  onClick={() => drop(v.id)}
+                >
+                  <i
+                    className="apx-drive-dot"
+                    style={{ '--sys': colorOf(i) } as CSSProperties}
+                    aria-hidden
+                  />
+                  {layoutCode(v)} {modelTag(v.name)}
+                  <span aria-hidden>×</span>
+                </button>
+              ) : null,
+            )}
+            <button
+              type="button"
+              className="apx-drive-pick is-add"
+              disabled={picked.length >= MAX_VS}
+              onClick={() => openPicker('vs')}
+              title="Drive against a car of your choice"
+            >
+              + Car
+            </button>
           </div>
         )}
         <Segmented<CameraMode>

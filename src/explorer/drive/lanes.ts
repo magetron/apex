@@ -19,6 +19,13 @@ export interface LetGo {
   g: number;
 }
 
+/** What to watch on a car around the key moment: one axle, over a stretch of sim time (s). */
+export interface Watch {
+  axle: 'front' | 'rear';
+  t0: number;
+  t1: number;
+}
+
 /** grip in use (share of the friction circles) that counts as letting go, and for how long */
 const LET_GO_USE = 0.985;
 const LET_GO_S = 0.12;
@@ -30,6 +37,8 @@ export interface LaneInfo {
   name: string;
   /** a comparison car's layout family (its colour); null for the visitor's car and its twin */
   family: Family | null;
+  /** which of its family's colours (colorSlots): 0 unless an earlier car wears the first */
+  slot?: number;
 }
 
 export class Lane {
@@ -39,6 +48,8 @@ export class Lane {
   readonly view = createState();
   phase = 0;
   letGo: LetGo | null = null;
+  /** the axle to ring around the key moment (set by the scene once the run is known) */
+  watch: Watch | null = null;
   /** when this car passed each of the plan's marks (s of sim time), NaN until it does */
   readonly markT: number[];
   readonly marks: Mark[];

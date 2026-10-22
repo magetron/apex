@@ -114,8 +114,24 @@ export interface Plan {
   summarize(tr: Trace, p: CarParams): ScenarioResult;
 }
 
+/**
+ * The moment that answers a scenario's question, for slow motion and a marker: the scripted
+ * event (the lift, the brake, the throttle…) or the first axle running out of grip, and how
+ * much sim time either side of it to show slowed down (s).
+ */
+export interface KeySpec {
+  at: 'event' | 'let-go';
+  before: number;
+  after: number;
+  /** name on the timeline when the scenario has no event marker ("Swerve") */
+  label?: string;
+}
+
 export interface ScenarioDef {
   id: ScenarioId;
+  /** the question the scenario answers: its name in the hub and on the info card */
+  question: string;
+  /** the technique or test that answers it (the subtitle) */
   label: string;
   /** chip-sized name */
   short: string;
@@ -127,6 +143,7 @@ export interface ScenarioDef {
   event?: string;
   /** the number this scenario is about (what its summary leads with) */
   headline: MetricId;
+  key: KeySpec;
   /** radius of the corner the event happens in (m): speeds read as a share of the grip there */
   radius?: number;
   plan(kmh: number): Plan;
