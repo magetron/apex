@@ -1,0 +1,642 @@
+/* Car picker: collapsed bar (bottom centre) + the sheet of cards. Colours: theme tokens, and the
+   system palette passed in as --cp-* custom properties (CarPicker.tsx). */
+
+/* ── silhouettes (vehicle mm, so strokes don't scale) ───────────────────── */
+.apx-cp-sil {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.apx-cp-sil :is(path, line, circle, polygon, use) {
+  vector-effect: non-scaling-stroke;
+}
+.apx-cp-sil__ground {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+.apx-cp-sil__body {
+  fill: color-mix(in srgb, var(--text) 7%, transparent);
+  stroke: var(--text-muted);
+  stroke-width: 1;
+  stroke-linejoin: round;
+}
+.apx-cp-sil__engine {
+  fill: var(--cp-engine);
+}
+.apx-cp-sil__gearbox {
+  fill: var(--cp-gearbox);
+}
+.apx-cp-sil__motor {
+  fill: var(--cp-motor);
+}
+.apx-cp-sil__battery {
+  fill: var(--cp-battery);
+  opacity: 0.7;
+}
+.apx-cp-sil__shaft {
+  stroke: var(--cp-shaft);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+.apx-cp-sil__wheel {
+  fill: var(--bg-solid);
+  fill-opacity: 0.6;
+  stroke: var(--cp-wheel);
+  stroke-width: 1.5;
+}
+.apx-cp-sil__wheel.is-driven {
+  fill: var(--cp-driven);
+  fill-opacity: 0.25;
+  stroke: var(--cp-driven);
+  stroke-width: 2.2;
+}
+/* the classic CG roundel: black and white in either theme */
+.apx-cp-sil__cg circle {
+  fill: #f4f6f8;
+  stroke: #0a0e13;
+  stroke-width: 1;
+}
+.apx-cp-sil__cg path {
+  fill: #0a0e13;
+}
+/* the current car, laid over a card while it is compared */
+.apx-cp-sil__ghost {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.25;
+  stroke-dasharray: 4 3;
+  visibility: hidden;
+}
+.apx-cp-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* ── glyph: where the power unit sits / which wheels drive ──────────────── */
+.apx-cp-glyph {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 12px;
+}
+.apx-cp-glyph__body {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  stroke-linejoin: round;
+  opacity: 0.55;
+}
+.apx-cp-glyph circle {
+  fill: var(--bg-solid);
+  stroke: var(--cp-wheel);
+  stroke-width: 1.2;
+}
+.apx-cp-glyph circle.is-driven {
+  fill: var(--cp-driven);
+  stroke: var(--cp-driven);
+}
+.apx-cp-glyph rect {
+  fill: var(--text-muted);
+}
+.apx-cp-glyph rect.is-engine {
+  fill: var(--cp-engine);
+}
+.apx-cp-glyph rect.is-motor {
+  fill: var(--cp-motor);
+}
+
+/* ── collapsed bar ─────────────────────────────────────────────────────── */
+.apx-cp-bar {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  width: min(440px, 100%);
+  padding: 4px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  backdrop-filter: blur(10px);
+}
+.apx-cp-step,
+.apx-cp-close {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.apx-cp-step svg,
+.apx-cp-close svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.apx-cp-step:hover:not(:disabled),
+.apx-cp-close:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+.apx-cp-step:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.apx-cp-current {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.apx-cp-current:hover {
+  background: var(--bg-hover);
+  border-color: var(--line);
+}
+.apx-cp-current > .apx-cp-sil {
+  flex: 0 0 84px;
+  width: 84px;
+}
+.apx-cp-current__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.apx-cp-current__text > b {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.apx-cp-current__sub {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font: 11px/1.2 var(--mono);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.apx-cp-current__sub > span {
+  display: inline-flex;
+}
+.apx-cp-current__idx {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 11px/1 var(--mono);
+  color: var(--text-faint);
+}
+.apx-cp-current__idx svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  opacity: 0.8;
+}
+.apx-cp-current:hover .apx-cp-current__idx {
+  color: var(--accent);
+}
+
+/* ── the sheet ─────────────────────────────────────────────────────────── */
+.apx-cp[open] {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 24px;
+  border: 0;
+  display: flex;
+  justify-content: center;
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  backdrop-filter: blur(6px);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  overflow: hidden;
+}
+.apx-cp::backdrop {
+  background: transparent;
+}
+.apx-cp-sheet {
+  width: min(1280px, 100%);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-elev);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+.apx-cp-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.apx-cp-search {
+  flex: 1 1 180px;
+  min-width: 0;
+  max-width: 320px;
+  background: var(--bg-solid);
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 14px;
+}
+.apx-cp-head .apx-seg button {
+  flex: 0 0 auto;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+.apx-cp-count {
+  margin-left: auto;
+  font: 12px/1 var(--mono);
+  color: var(--text-faint);
+}
+.apx-cp-clear {
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.apx-cp-clear:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.apx-cp-close {
+  height: 32px;
+}
+
+.apx-cp-facets {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.apx-cp-facet {
+  display: contents;
+}
+.apx-cp-facet__label {
+  align-self: center;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.apx-cp-facet__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+.apx-cp-chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--line);
+  background: var(--well-bg);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.3;
+  padding: 3px 9px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.apx-cp-chip small {
+  font: 10.5px/1 var(--mono);
+  color: var(--text-faint);
+}
+.apx-cp-chip > i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.apx-cp-chip > i.is-engine {
+  background: var(--cp-engine);
+}
+.apx-cp-chip > i.is-motor {
+  background: var(--cp-motor);
+}
+.apx-cp-chip:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+.apx-cp-chip[aria-pressed='true'] {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--bg-hover);
+}
+.apx-cp-chip[aria-pressed='true'] small {
+  color: var(--accent);
+}
+.apx-cp-chip:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.apx-cp-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(214px, 1fr));
+  align-content: start;
+  gap: 8px;
+  padding: 12px;
+  scrollbar-width: thin;
+}
+.apx-cp-empty {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin-top: 24px;
+}
+
+/* ── a card ────────────────────────────────────────────────────────────── */
+.apx-cp-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px 10px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.apx-cp-card:hover {
+  border-color: var(--line-strong);
+  background: var(--bg-hover);
+}
+.apx-cp-card[aria-current='true'] {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.apx-cp-card > .apx-cp-sil {
+  margin-bottom: 2px;
+}
+.apx-cp-card__name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.3;
+}
+.apx-cp-card__name b {
+  font-weight: 600;
+}
+.apx-cp-card__name small {
+  margin-left: 6px;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.apx-cp-traits {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.apx-cp-trait {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+.apx-cp-unit {
+  font-family: var(--mono);
+  white-space: nowrap;
+  color: var(--text);
+}
+.apx-cp-unit::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 5px;
+  border-radius: 50%;
+  vertical-align: 0.05em;
+  background: var(--cp-engine);
+}
+.apx-cp-unit.is-motor::before {
+  background: var(--cp-motor);
+}
+
+/* front / rear axle load */
+.apx-cp-split {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: 11px/1 var(--mono);
+  color: var(--text-muted);
+}
+.apx-cp-split > b {
+  font-weight: 600;
+}
+.apx-cp-split.is-hot > b {
+  color: var(--accent);
+}
+.apx-cp-split__bar {
+  position: relative;
+  flex: 1 1 auto;
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-faint) 45%, transparent);
+}
+.apx-cp-split__bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 999px 0 0 999px;
+  background: var(--text-muted);
+}
+.apx-cp-split__bar::after {
+  /* 50:50 */
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  background: var(--text);
+  opacity: 0.4;
+}
+.apx-cp-split__cur {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--accent);
+}
+
+.apx-cp-nums {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+.apx-cp-num {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-family: var(--mono);
+  line-height: 1.25;
+}
+.apx-cp-num b {
+  font-size: 13px;
+  font-weight: 500;
+}
+.apx-cp-num small {
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.apx-cp-num.is-hot b {
+  color: var(--accent);
+  font-weight: 650;
+}
+
+/* differences to the current car: hidden until the card is compared */
+.apx-cp-cmp {
+  font: normal 10.5px/1.25 var(--mono);
+  color: var(--accent);
+  white-space: nowrap;
+  visibility: hidden;
+}
+.apx-cp-cmp[data-sign='0'] {
+  color: var(--text-faint);
+}
+.apx-cp-card:is(:hover, :focus-visible):not([aria-current='true'])
+  :is(.apx-cp-cmp, .apx-cp-sil__ghost) {
+  visibility: visible;
+}
+/* no hover on touch screens: compare every card at once */
+@media (hover: none) {
+  .apx-cp-card:not([aria-current='true']) :is(.apx-cp-cmp, .apx-cp-sil__ghost) {
+    visibility: visible;
+  }
+}
+
+:is(
+  .apx-cp-step,
+  .apx-cp-current,
+  .apx-cp-close,
+  .apx-cp-chip,
+  .apx-cp-clear,
+  .apx-cp-card,
+  .apx-cp-search
+):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── phones: a full-screen sheet ───────────────────────────────────────── */
+@media (max-width: 760px) {
+  .apx-cp-bar {
+    width: 100%;
+  }
+  .apx-cp-step {
+    width: 28px;
+  }
+  .apx-cp-current {
+    gap: 8px;
+    padding: 4px 6px;
+  }
+  .apx-cp-current > .apx-cp-sil {
+    flex-basis: 60px;
+    width: 60px;
+  }
+  .apx-cp-current__idx > span {
+    display: none;
+  }
+  .apx-cp[open] {
+    padding: 0;
+  }
+  .apx-cp-sheet {
+    width: 100%;
+    border: 0;
+    border-radius: 0;
+  }
+  .apx-cp-search {
+    max-width: none;
+    flex-basis: 100%;
+    order: -1;
+  }
+  .apx-cp-head .apx-seg {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .apx-cp-facets {
+    gap: 6px 8px;
+    padding: 8px 10px;
+  }
+  .apx-cp-facet__chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .apx-cp-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 6px;
+    padding: 8px;
+  }
+  .apx-cp-card {
+    padding: 6px 7px 7px;
+    gap: 5px;
+  }
+  .apx-cp-num b {
+    font-size: 11.5px;
+  }
+  .apx-cp-num small,
+  .apx-cp-cmp {
+    font-size: 9.5px;
+  }
+}

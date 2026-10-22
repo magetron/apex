@@ -1,0 +1,529 @@
+/* Drive mode: hub, dashboard, info card, labels on the road, touch controls. */
+
+/* ── labels anchored in 3D ─────────────────────────────── */
+.apx-drive-carlabel {
+  gap: 5px;
+}
+.apx-drive-needle {
+  position: relative;
+  display: inline-block;
+  width: 26px;
+  height: 8px;
+  margin-left: 2px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--warn) 0 30%, var(--well-bg) 30% 70%, var(--accent) 70%);
+  opacity: 0.85;
+}
+.apx-drive-needle::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  background: var(--text-faint);
+}
+.apx-drive-needle i {
+  position: absolute;
+  left: calc(50% - 2px);
+  top: -3px;
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--text);
+  transition: transform 80ms linear;
+}
+.apx-drive-mark {
+  font-weight: 600;
+  opacity: 0.72;
+  transition:
+    opacity 150ms,
+    box-shadow 150ms;
+}
+.apx-drive-mark.is-now {
+  opacity: 1;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sys) 35%, transparent);
+}
+.apx-drive-mark__hold {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 2px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.apx-drive-letgo {
+  font-weight: 600;
+}
+
+/* ── hub (bottom-left) ─────────────────────────────────── */
+.apx-drive-hub {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.apx-drive-techs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 2px;
+  background: var(--well-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+.apx-drive-techs button {
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.apx-drive-techs button:hover {
+  color: var(--text);
+}
+.apx-drive-techs button[aria-checked='true'] {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+.apx-drive-techs button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.apx-drive-keys {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.apx-drive-keys kbd {
+  font: 600 11px/1 var(--mono);
+  color: var(--text-muted);
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 3px 5px;
+  min-width: 18px;
+  text-align: center;
+}
+.apx-drive-more {
+  display: contents;
+}
+.apx-drive-gear {
+  display: none;
+}
+.apx-drive-select {
+  display: none;
+}
+
+/* ── dashboard (bottom-centre): what the driver does + the timeline ── */
+.apx-drive-dash {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(560px, 100%);
+  padding: 10px 14px;
+}
+.apx-drive-driver {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.apx-drive-wheel {
+  position: relative;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  color: var(--text);
+}
+.apx-drive-wheel svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.apx-drive-wheel__still {
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  transform: translateX(-50%);
+  font: 700 9px/1 var(--font);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  background: var(--warn);
+  border-radius: 999px;
+  padding: 2px 5px;
+  white-space: nowrap;
+  visibility: hidden;
+}
+.apx-drive-wheel.is-still .apx-drive-wheel__still {
+  visibility: visible;
+}
+.apx-drive-wheel.is-still svg {
+  color: var(--warn);
+}
+.apx-drive-pedals {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+.apx-drive-pedal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font: 600 10px/1 var(--font);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.apx-drive-pedal__bar {
+  position: relative;
+  width: 14px;
+  height: 40px;
+  border-radius: 3px;
+  background: var(--well-bg);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.apx-drive-pedal__bar i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  transform-origin: bottom;
+  transform: scaleY(0);
+  background: var(--ok);
+}
+.apx-drive-pedal--brake .apx-drive-pedal__bar i {
+  background: var(--danger);
+}
+.apx-drive-read {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  gap: 2px 14px;
+  margin-left: auto;
+  font-family: var(--mono);
+  color: var(--text);
+  font-size: 15px;
+  white-space: nowrap;
+}
+.apx-drive-read small {
+  display: block;
+  font: 500 10px/1.2 var(--font);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.apx-drive-time {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.apx-drive-iconbtn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong);
+  background: var(--bg-solid);
+  color: var(--text);
+  cursor: pointer;
+}
+.apx-drive-iconbtn:hover {
+  border-color: var(--accent);
+}
+.apx-drive-iconbtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.apx-drive-iconbtn svg {
+  width: 16px;
+  height: 16px;
+}
+.apx-drive-scrub {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 32px;
+}
+.apx-drive-scrub input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  margin: 0;
+  accent-color: var(--accent);
+  background: transparent;
+}
+.apx-drive-scrub__ticks {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+.apx-drive-scrub__hold {
+  position: absolute;
+  top: 9px;
+  height: 14px;
+  background: var(--warn);
+  opacity: 0.28;
+  border-radius: 3px;
+}
+.apx-drive-scrub__tick {
+  position: absolute;
+  top: 6px;
+  width: 2px;
+  height: 20px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--sys);
+}
+.apx-drive-scrub__tick span {
+  position: absolute;
+  left: 50%;
+  top: -12px;
+  transform: translateX(-50%);
+  font: 600 9px/1 var(--font);
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.apx-drive-clock {
+  flex: 0 0 auto;
+  font: 500 12px/1 var(--mono);
+  color: var(--text-muted);
+  width: 42px;
+  text-align: right;
+}
+.apx-drive-rate {
+  flex: 0 0 auto;
+}
+.apx-drive-rate button {
+  padding: 5px 7px;
+}
+
+/* ── info card (top-right) ─────────────────────────────── */
+.apx-drive-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.apx-drive-steps span {
+  padding: 3px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.apx-drive-steps span.is-now {
+  border-color: var(--sys, var(--accent));
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--sys, var(--accent));
+}
+.apx-drive-steps b {
+  font-weight: 400;
+}
+.apx-drive-slips {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 5px 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.apx-drive-slips__bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--well-bg);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.apx-drive-slips__bar i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left;
+  transform: scaleX(0);
+  background: var(--text-faint);
+}
+.apx-drive-slips__val {
+  font: 500 12px/1 var(--mono);
+  color: var(--text);
+  min-width: 40px;
+  text-align: right;
+}
+.apx-drive-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.apx-drive-table td {
+  padding: 3px 0;
+  white-space: nowrap;
+}
+.apx-drive-table td + td {
+  padding-left: 6px;
+}
+.apx-drive-table .is-name {
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-muted);
+}
+.apx-drive-table .is-num {
+  text-align: right;
+  font-family: var(--mono);
+}
+.apx-drive-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  background: var(--sys);
+}
+.apx-drive-verdict {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+.apx-drive-verdict[data-tone='under'] {
+  color: var(--accent);
+}
+.apx-drive-verdict[data-tone='over'] {
+  color: var(--warn);
+}
+.apx-drive-verdict[data-tone='spin'] {
+  color: var(--danger);
+}
+.apx-drive-verdict[data-tone='calm'] {
+  color: var(--text-faint);
+}
+
+/* ── touch controls: over the scene's lower corners, just above the dashboard ── */
+.apx-drive-dash {
+  position: relative;
+}
+.apx-drive-touch {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 10px);
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  pointer-events: none;
+  touch-action: none;
+  user-select: none;
+}
+.apx-drive-touch > div {
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+}
+.apx-drive-touch button {
+  width: 64px;
+  height: 56px;
+  border-radius: 14px;
+  border: 1px solid var(--line-strong);
+  background: var(--bg-elev);
+  backdrop-filter: blur(8px);
+  color: var(--text);
+  font: 700 12px/1 var(--font);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.apx-drive-touch button.is-down {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+}
+.apx-drive-touch .is-gas.is-down {
+  background: var(--ok);
+  border-color: var(--ok);
+}
+.apx-drive-touch .is-brake.is-down {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+.apx-drive-touch svg {
+  width: 24px;
+  height: 24px;
+}
+
+@media (pointer: coarse) {
+  .apx-drive-keys {
+    display: none;
+  }
+}
+
+/* ── phones ────────────────────────────────────────────── */
+@media (max-width: 760px) {
+  /* the info card goes to the top in drive mode, where the HUD leaves room */
+  .apx-dock--top-right:has(.apx-drive-info) {
+    top: calc(var(--gutter) + 44px);
+    bottom: auto;
+    max-height: 20vh;
+  }
+  .apx-drive-info .apx-drive-slips,
+  .apx-drive-info .apx-drive-live {
+    display: none;
+  }
+  .apx-drive-gear {
+    display: inline-flex;
+  }
+  .apx-drive-hub:not(.is-open) .apx-drive-more {
+    display: none;
+  }
+  .apx-drive-hub:not(.is-open) .apx-drive-techs {
+    display: none;
+  }
+  .apx-drive-hub:not(.is-open) .apx-drive-select {
+    display: block;
+  }
+  .apx-drive-dash {
+    width: 100%;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+  .apx-drive-wheel {
+    width: 34px;
+    height: 34px;
+  }
+  .apx-drive-pedal__bar {
+    height: 30px;
+  }
+  .apx-drive-read {
+    font-size: 13px;
+    gap: 1px 10px;
+  }
+  .apx-drive-scrub__tick span {
+    display: none;
+  }
+  .apx-drive-rate {
+    display: none;
+  }
+}

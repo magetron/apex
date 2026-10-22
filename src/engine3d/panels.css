@@ -1,0 +1,112 @@
+/* WP2 engine panels: firing timeline, crank-throw diagram, balance bars. Theme tokens only. */
+.apx-fire {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.apx-fire__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.apx-fire__now {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+}
+.apx-fire svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: none;
+  cursor: ew-resize;
+  user-select: none;
+}
+.apx-fire__row {
+  fill: var(--well-bg);
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.apx-fire__tick {
+  stroke: var(--text-faint);
+  stroke-width: 1;
+}
+.apx-fire__num {
+  font: 600 8px var(--mono);
+  fill: var(--text);
+}
+.apx-fire__lbl,
+.apx-fire__axis {
+  font: 8px var(--mono);
+  fill: var(--text-faint);
+}
+.apx-fire__cursor {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.apx-engine-viz {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.apx-crank {
+  flex: 0 0 84px;
+  width: 84px;
+  height: 84px;
+}
+.apx-crank__ring {
+  fill: none;
+  stroke: var(--line-strong);
+}
+.apx-crank__bank {
+  stroke: var(--text-faint);
+  stroke-dasharray: 2 2;
+}
+.apx-crank__throw {
+  stroke: var(--text);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+.apx-crank__num {
+  font: 600 8px var(--mono);
+  fill: var(--text);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.apx-bal {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 3px 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  min-width: 0;
+}
+.apx-bal__track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--well-bg);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.apx-bal__bar {
+  display: block;
+  height: 100%;
+  background: var(--sys);
+}
+.apx-bal__val {
+  font-family: var(--mono);
+  color: var(--text);
+  text-align: right;
+  min-width: 34px;
+}
+.apx-bal__ok {
+  grid-column: 1 / -1;
+  color: var(--ok);
+  font-weight: 600;
+}

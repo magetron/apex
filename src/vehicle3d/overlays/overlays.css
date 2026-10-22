@@ -1,0 +1,32 @@
+/* WP3 overlay tags: small data labels anchored in 3D (theme tokens from app/theme.css). */
+.wp3-tag {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font: 600 11px/1 var(--mono);
+  color: var(--text);
+  background: var(--label-bg);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 3px 7px;
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+}
+.wp3-tag small {
+  font: 500 10px/1 var(--font);
+  color: var(--text-muted);
+}
+.wp3-tag--ok {
+  border-color: var(--ok);
+}
+.wp3-tag--warn {
+  border-color: var(--warn);
+}
+.wp3-tag--bad {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.wp3-tag--flow {
+  border-color: var(--warn);
+}

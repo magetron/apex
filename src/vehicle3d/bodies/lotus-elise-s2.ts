@@ -1,0 +1,158 @@
+/**
+ * Lotus Elise (S2): a tiny, low, curvy mid-engined roadster. Smiling mouth intake, oval lamps
+ * in the tops of the wings, a short soft top, big scoops ahead of the rear wheels, round twin
+ * tail lamps and a short louvred engine deck.
+ */
+import { ellipse, roundRect } from '../shell/decals';
+import type { BodyTuning, Decal } from '../shell/types';
+
+const tune: BodyTuning = () => ({
+  top: [
+    [690, 430],
+    [675, 500],
+    [620, 560],
+    [350, 620],
+    [-100, 680],
+    [-550, 720],
+    [-700, 900],
+    [-880, 1095],
+    [-950, 1110],
+    [-1250, 1117],
+    [-1500, 1090],
+    [-1650, 1000],
+    [-2100, 900],
+    [-2700, 872],
+    [-2950, 862],
+    [-3060, 800],
+    [-3095, 640],
+  ],
+  belt: [
+    [690, 420],
+    [650, 560],
+    [450, 640],
+    [100, 682],
+    [-550, 730],
+    [-1500, 790],
+    [-2100, 850],
+    [-2600, 878],
+    [-2950, 858],
+    [-3095, 630],
+  ],
+  bottom: [
+    [690, 260],
+    [560, 160],
+    [300, 120],
+    [-2700, 125],
+    [-2950, 200],
+    [-3095, 320],
+  ],
+  plan: [
+    [690, 0.88],
+    [0, 0.95],
+    [-1200, 0.93],
+    [-2300, 1],
+    [-3095, 0.96],
+  ],
+  nose: { len: 380, p: 2.1 },
+  tail: { len: 300, p: 2.3 },
+  cabin: [-1680, -540],
+  roofHalf: 0.66,
+  crown: 30,
+  topExp: 2.4,
+  tuck: 60,
+  tuckUnder: 45,
+  shoulder: 0.5,
+  beltCrease: false,
+  wing: [
+    [500, 0],
+    [300, 32],
+    [-200, 20],
+    [-500, 0],
+    [-1900, 0],
+    [-2300, 36],
+    [-2800, 20],
+    [-3050, 0],
+  ],
+  wingAt: 0.8,
+  flare: [35, 50],
+  flareTop: 0.5,
+  archGap: 32,
+  lip: 0,
+  mirrors: { x: -640, dy: 70, mat: 'black' },
+  exhaust: [{ z: 0, y: 330, r: 45 }],
+  decals: (_s, d) => {
+    const keep = d.filter((x) =>
+      ['windscreen', 'dlo', 'soft-top', 'rear-window'].includes(x.tag ?? ''),
+    );
+    const louvres: Decal[] = [0, 1, 2].map((k) => ({
+      view: 'top',
+      ...roundRect(-2500 - k * 110, -2440 - k * 110, -360, 360, 12),
+      mat: 'black',
+      offset: 3,
+      nv: 4,
+      outline: false,
+    }));
+    return [
+      ...keep,
+      {
+        tag: 'headlight',
+        view: 'front',
+        ...ellipse(560, 590, 140, 62),
+        mat: 'lamp',
+        mirror: true,
+        offset: 5,
+        nu: 12,
+        nv: 8,
+      },
+      {
+        tag: 'mouth',
+        view: 'front',
+        ...ellipse(0, 360, 400, 80),
+        mat: 'grille',
+        offset: 4,
+        nu: 16,
+        nv: 6,
+      },
+      {
+        tag: 'side-scoop',
+        view: 'side',
+        ...ellipse(-1860, 560, 200, 120),
+        mat: 'grille',
+        mirror: true,
+        offset: 4,
+        nu: 12,
+        nv: 8,
+      },
+      ...louvres,
+      {
+        tag: 'taillight',
+        view: 'rear',
+        ...ellipse(560, 700, 56, 56),
+        mat: 'lampRed',
+        mirror: true,
+        offset: 5,
+        nu: 8,
+        nv: 8,
+      },
+      {
+        tag: 'taillight-outer',
+        view: 'rear',
+        ...ellipse(700, 700, 56, 56),
+        mat: 'lampRed',
+        mirror: true,
+        offset: 5,
+        nu: 8,
+        nv: 8,
+      },
+      {
+        tag: 'diffuser',
+        view: 'rear',
+        ...roundRect(-600, 600, 260, 440, 40),
+        mat: 'black',
+        offset: 3,
+      },
+    ];
+  },
+});
+
+export default tune;
