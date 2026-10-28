@@ -35,6 +35,8 @@ import {
   TrackPicker,
 } from './track/TrackHud';
 import { findTrack } from '../sim/track/registry';
+import { openTours } from './tour/state';
+import { useTourSound } from './tour/TourPlayer';
 import { isSeeThrough, withSeeThrough, type Go, type View } from './view';
 import './explorer.css';
 
@@ -197,6 +199,7 @@ function Hub({ view, go, vehicle, engine }: HudProps) {
     />
   );
   const soundMore = enginePart && <SoundControls audio={audio} pedalKeys={false} />;
+  useTourSound(audio);
   const setSee = (on: boolean) => go(withSeeThrough(view, on), { replace: view.level !== 'part' });
   const carView = view.level === 'car' || view.level === 'internals';
   const drive = () => {
@@ -217,6 +220,11 @@ function Hub({ view, go, vehicle, engine }: HudProps) {
             {carView && (
               <Button onClick={hotLap} title="Lap a real circuit, against the clock">
                 Hot lap
+              </Button>
+            )}
+            {carView && (
+              <Button onClick={openTours} title="Guided questions">
+                Tours
               </Button>
             )}
             {carView && (

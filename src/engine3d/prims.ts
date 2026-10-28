@@ -220,11 +220,6 @@ export function roundedRect(
   return pts;
 }
 
-export const v3add = (a: V3, b: V3, k = 1): V3 => [
-  a[0] + b[0] * k,
-  a[1] + b[1] * k,
-  a[2] + b[2] * k,
-];
 export const v3sub = (a: V3, b: V3): V3 => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 export const v3len = (a: V3) => Math.hypot(a[0], a[1], a[2]);
 export const v3norm = (a: V3): V3 => {

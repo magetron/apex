@@ -32,20 +32,3 @@ export function wheelPoint(p: CarParams, st: CarState, i: number, out: Ground): 
   out.z = -(st.n + s * bx + c * by);
   return out;
 }
-
-/** A tyre-frame force of wheel i turned into a world (x, z) direction (unnormalised). */
-export function wheelForce(st: CarState, i: number, out: Ground): Ground {
-  const delta = i < 2 ? st.steer - st.twist : 0;
-  const cd = Math.cos(delta);
-  const sd = Math.sin(delta);
-  const bx = st.fx[i] * cd - st.fy[i] * sd;
-  const by = st.fx[i] * sd + st.fy[i] * cd;
-  const c = Math.cos(st.yaw);
-  const s = Math.sin(st.yaw);
-  out.x = c * bx - s * by;
-  out.z = -(s * bx + c * by);
-  return out;
-}
-
-/** three.js rotation.y that points local +X along world direction (dx, dz). */
-export const yawOf = (dx: number, dz: number) => Math.atan2(-dz, dx);

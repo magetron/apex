@@ -71,21 +71,6 @@ export type Verdict =
   | 'caught'
   | 'no-slide';
 
-export const VERDICTS: Record<
-  Verdict,
-  { label: string; tone: 'under' | 'over' | 'spin' | 'calm' }
-> = {
-  wide: { label: 'Runs wide', tone: 'under' },
-  tight: { label: 'Tightens', tone: 'over' },
-  neutral: { label: 'Holds line', tone: 'calm' },
-  tail: { label: 'Tail out', tone: 'over' },
-  spin: { label: 'Spins', tone: 'spin' },
-  'front-first': { label: 'Front slides', tone: 'under' },
-  'rear-first': { label: 'Rear slides', tone: 'over' },
-  caught: { label: 'Caught', tone: 'over' },
-  'no-slide': { label: 'No slide', tone: 'calm' },
-};
-
 /** A labelled spot on the road: what the driver does there. */
 export interface Mark {
   /** arc length along the plan's path (m) */

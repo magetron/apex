@@ -27,65 +27,6 @@ const STRAIGHT = Path.build([{ kind: 'line', len: 10 }]);
 const sst = createState();
 const su: Inputs = { steer: 0, throttle: 0, brake: 0, esc: false };
 
-/** What sets a car's step-steer response that another car can differ in. */
-export type ResponseFactor = 'weight split' | 'yaw inertia' | 'tyres' | 'mass' | 'wheelbase';
-
-/**
- * Which differences make car `slow` answer later than car `fast`, as the model has it: give the
- * faster car one of the slower car's traits at a time (its weight split, its yaw inertia for its
- * size, its tyres, its mass, its wheelbase), run the step steer again, and keep how much each
- * moves the time (s; + = it makes the faster car slower). Largest first.
- */
-export function responseFactors(
-  fast: CarParams,
-  slow: CarParams,
-  v: number,
-): { factor: ResponseFactor; dt: number }[] {
-  const base = stepSteerResponse(fast, v);
-  const k = (p: CarParams) => p.izz / (p.m * p.a * p.b);
-  const split = () => {
-    const a = fast.L * (slow.a / slow.L);
-    const b = fast.L - a;
-    return {
-      ...fast,
-      a,
-      b,
-      izz: k(fast) * fast.m * a * b,
-      front: { ...fast.front, x: a },
-      rear: { ...fast.rear, x: -b },
-    };
-  };
-  const wheelbase = () => {
-    const s = slow.L / fast.L;
-    return {
-      ...fast,
-      L: slow.L,
-      a: fast.a * s,
-      b: fast.b * s,
-      izz: fast.izz * s * s,
-      front: { ...fast.front, x: fast.a * s },
-      rear: { ...fast.rear, x: -fast.b * s },
-    };
-  };
-  const tries: [ResponseFactor, CarParams][] = [
-    ['weight split', split()],
-    ['yaw inertia', { ...fast, izz: k(slow) * fast.m * fast.a * fast.b }],
-    [
-      'tyres',
-      {
-        ...fast,
-        front: { ...fast.front, fz0: slow.front.fz0, mu: slow.front.mu },
-        rear: { ...fast.rear, fz0: slow.rear.fz0, mu: slow.rear.mu },
-      },
-    ],
-    ['mass', { ...fast, m: slow.m, izz: fast.izz * (slow.m / fast.m) }],
-    ['wheelbase', wheelbase()],
-  ];
-  return tries
-    .map(([factor, p]) => ({ factor, dt: stepSteerResponse(p, v) - base }))
-    .sort((x, y) => y.dt - x.dt);
-}
-
 /**
  * ISO 7401-style step-steer response time at speed v (s): from half the steering input to the
  * yaw rate first reaching STEP_SHARE of where it settles (the mean over the last half second).

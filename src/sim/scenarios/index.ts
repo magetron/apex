@@ -52,7 +52,6 @@ export { Recorder } from './replay';
 export { offsetPoint, Path, type PathPoint } from './path';
 export {
   METRICS,
-  VERDICTS,
   type Ctl,
   type KeySpec,
   type Mark,

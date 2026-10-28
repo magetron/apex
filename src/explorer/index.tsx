@@ -25,6 +25,9 @@ import { RimLight } from './RimLight';
 import { VehicleSlot } from './VehicleSlot';
 import { backOut, isSeeThrough, useView, withSeeThrough, type Go, type View } from './view';
 import { typing } from './keys';
+import { leaveTour } from './tour/play';
+import { stagedFor } from './tour/state';
+import { TourPlayer } from './tour/TourPlayer';
 
 /**
  * Moves the car to its drive-mode position and heading (identity otherwise). Roll and pitch are
@@ -161,18 +164,20 @@ function useExplorerSync(view: View, go: Go) {
     prevLevel.current = view.level;
     // dragging Explode on the painted car switches see-through on: keep where it was dragged
     const keepExplode = from === 'car' && view.level === 'internals';
+    // a tour step opens its view exploded and with its parts picked out (and says which itself)
+    const staged = stagedFor(view);
     useScene.setState({
-      highlight: [],
+      highlight: staged?.highlight ?? [],
       hovered: null,
       selected: null,
-      ...(keepExplode ? {} : { explode: 0 }),
+      ...(staged ? { explode: staged.explode } : keepExplode ? {} : { explode: 0 }),
       focus: view.level === 'part' ? (view.part ?? null) : null,
       // the engine stays a solid block in the see-through car (the one thing to find); only
       // zoomed into it does its casing turn to glass
       xray: view.level === 'part',
     });
     // see-through switched on: the engine (or motors) lights up and names itself for a moment
-    if (from === 'car' && view.level === 'internals') {
+    if (from === 'car' && view.level === 'internals' && !staged) {
       const units = layoutPowertrain(vehicle)
         .parts.filter((p) => p.kind === 'engine' || p.kind === 'motor')
         .map((p) => p.id);
@@ -240,7 +245,8 @@ export function Overlay() {
             return;
           }
         }
-        backOut(view, go);
+        // a tour playing: Esc ends it, back where the visitor was
+        if (!leaveTour()) backOut(view, go);
       }
       // X: see-through on/off, wherever the car is on show (not while driving)
       else if (
@@ -260,6 +266,8 @@ export function Overlay() {
     <>
       <ModelProgress vehicleId={base.id} others={view.level === 'drive' ? undefined : view.vs} />
       <Hud view={view} go={go} vehicle={vehicle} engine={engine} />
+      {/* after the HUD: what a step sets once its view is open follows the HUD's own resets */}
+      <TourPlayer view={view} />
     </>
   );
 }

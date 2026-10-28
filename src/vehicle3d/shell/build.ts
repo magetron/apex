@@ -16,8 +16,6 @@ const TUNING = new Map<string, BodyTuning>(
   Object.entries(found).map(([path, t]) => [path.replace(/^.*\/|\.ts$/g, ''), t]),
 );
 
-export const hasTuning = (id: string) => TUNING.has(id);
-
 export function resolveBody(v: VehicleSpec): { c: BodyContext; p: BodyParams } {
   const c = bodyContext(v);
   let p = defaultParams(c);

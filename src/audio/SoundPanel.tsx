@@ -1,12 +1,12 @@
 /**
- * <SoundPanel engine> — compact sound controls for the explorer hub: sound on/off, gas pedal (hold
- * the button or Space), throttle blip, rev sweep, volume, and the add-on toggles that apply to
- * this engine or motor.
+ * <SoundControls audio> — compact sound controls for the explorer hub: sound on/off, gas pedal
+ * (hold the button or Space), throttle blip, rev sweep, volume, and the add-on toggles that apply
+ * to this engine or motor.
  */
 import { useCallback, useEffect, type ReactNode } from 'react';
-import type { AddonKey, SoundSource } from './config';
+import type { AddonKey } from './config';
 import { useAudioSettings } from './settings';
-import { useEngineAudio, type EngineAudio, type EngineAudioOptions } from './useEngineAudio';
+import type { EngineAudio } from './useEngineAudio';
 import './sound.css';
 
 const ADDON_LABEL: Record<AddonKey, string> = {
@@ -226,9 +226,4 @@ function usePedalKey(floor: ((down: boolean) => void) | null) {
       window.removeEventListener('blur', lift);
     };
   }, [floor]);
-}
-
-export function SoundPanel({ engine, ...options }: { engine: SoundSource } & EngineAudioOptions) {
-  const audio = useEngineAudio(engine, options);
-  return <SoundControls audio={audio} />;
 }

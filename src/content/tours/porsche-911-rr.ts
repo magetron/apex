@@ -8,7 +8,7 @@ const tour: Tour = {
     {
       id: 'tail-heavy',
       title: 'Engine behind the axle',
-      body: 'The flat-6 hangs behind the rear axle, so the CG roundel sits well aft. Read the axle-load bars: the rear tyres carry most of the car.',
+      body: 'The flat-6 hangs behind the rear axle, so the centre of gravity sits well aft and the rear axle-load bar towers over the front one.',
       scene: {
         view: { vehicleId: 'porsche-911-992', level: 'internals' },
         highlight: ['engine'],
@@ -16,9 +16,9 @@ const tour: Tour = {
       },
     },
     {
-      id: 'turned-round',
-      title: 'Turned round',
-      body: 'Exploded: the gearbox sits ahead of the engine, between it and the cabin, with the differential on the axle line. The engine faces backwards, timing end at the tail.',
+      id: 'gearbox-ahead',
+      title: 'Gearbox ahead of the engine',
+      body: 'Exploded: the transaxle sits ahead of the engine, between it and the cabin, with the differential on the axle line.',
       scene: {
         view: { vehicleId: 'porsche-911-992', level: 'internals' },
         explode: 0.6,
@@ -26,41 +26,40 @@ const tour: Tour = {
       },
     },
     {
-      id: 'traction',
-      title: 'The upside: traction',
-      body: 'Accelerating, load moves rearward onto tyres that already carry most of the weight, so the 911 puts its power down early. Compare the front-drive ghost, which runs out of front grip.',
+      id: 'power-exit',
+      title: 'Throttle: the nose runs wide',
+      body: 'On the throttle out of a turn, load moves further onto the rear tyres and off a front that was light to begin with: the 911 pushes wide, while a rear-drive car with its engine in front slides its rear out.',
       scene: {
         view: { vehicleId: 'porsche-911-992', level: 'drive' },
-        drive: { scenario: 'power-exit', ghosts: ['vw-golf-gti-mk8'] },
+        drive: { scenario: 'power-exit', ghosts: ['bmw-m340i-g20'] },
       },
     },
     {
       id: 'lift-off',
-      title: 'The pendulum',
-      body: 'Lift off mid-corner: load shifts forward, the lightened rear tyres lose grip, and the heavy tail swings like a pendulum. Watch the yaw rate against the mid-engined Boxster.',
+      title: 'Lift off: the tail swings',
+      body: 'Lifting mid-corner takes load off the rear tyres, which carry the heavy tail: the 911 swings round, while the front-engined car only tightens its line.',
       scene: {
         view: { vehicleId: 'porsche-911-992', level: 'drive' },
-        drive: { scenario: 'lift-off', ghosts: ['porsche-718-boxster-t-982'] },
+        drive: { scenario: 'lift-off', ghosts: ['bmw-m340i-g20'] },
       },
     },
     {
-      id: 'cayman',
+      id: 'catch',
+      title: 'Caught with opposite lock',
+      body: 'When the tail goes, the driver steers out of the turn and the slide is caught; the same car without the correction spins.',
+      scene: {
+        view: { vehicleId: 'porsche-911-992', level: 'drive' },
+        drive: { scenario: 'catch' },
+      },
+    },
+    {
+      id: 'boxster',
       title: 'Same maker, engine moved',
-      body: 'The Boxster has a boxer engine too, a flat-4, but ahead of the rear axle and turned round, with the gearbox behind it. Watch the CG roundel move forward and the axle loads even out.',
+      body: 'The Boxster has a boxer engine too, a flat-4, but ahead of the rear axle with the gearbox behind it: the centre of gravity moves forward and the axle loads even out.',
       scene: {
         view: { vehicleId: 'porsche-718-boxster-t-982', level: 'internals' },
         highlight: ['engine', 'gearbox'],
         overlays: ['cg', 'axle-loads'],
-      },
-    },
-    {
-      id: 'taming',
-      title: 'How it was tamed',
-      body: 'Modern 911s fight the pendulum with a longer wheelbase than the original, rear tyres much wider than the fronts, optional rear-axle steering and stability control. Compare the tyre widths front and rear.',
-      scene: {
-        view: { vehicleId: 'porsche-911-992', level: 'car' },
-        overlays: ['dimensions'],
-        camera: 'top',
       },
     },
   ],

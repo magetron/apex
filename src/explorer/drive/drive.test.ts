@@ -1,14 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { carParams, createState, FL, FR, resetState, RL } from '../../sim/model';
 import { getVehicle, listVehicles } from '../../spec/catalog';
-import { HUB_ORDER, SCENARIOS } from '../../sim/scenarios';
+import { SCENARIOS } from '../../sim/scenarios';
 import { Hands, held, releaseAll } from './input';
-import { chooseSide, Lane, LANE_GAP } from './lanes';
-import { buildLineup, laneOf } from './lineup';
-import { roadLayout } from './Road';
+import { Lane } from './lanes';
 import { sketchOf } from './LayoutSketch';
-import { driveCars, FAMILIES, familyOf, representative, useDrive } from './state';
-import { poseOrigin, wheelForce, wheelPoint, yawOf, type Ground } from './world';
+import { FAMILIES, familyOf, representative } from './state';
+import { poseOrigin, wheelPoint, type Ground } from './world';
 
 describe('comparison cars', () => {
   it('every car has a family and every family a stand-in of that family', () => {
@@ -112,86 +110,6 @@ describe('lanes', () => {
   });
 });
 
-/** Two footprints (centre, heading, length, width) overlap: separating-axis test. */
-function overlap(
-  a: { x: number; n: number; h: number },
-  b: { x: number; n: number; h: number },
-  len: number,
-  wid: number,
-) {
-  const axes = [a.h, a.h + Math.PI / 2, b.h, b.h + Math.PI / 2];
-  for (const ax of axes) {
-    const ux = Math.cos(ax);
-    const un = Math.sin(ax);
-    const proj = (c: { h: number }) =>
-      (len / 2) * Math.abs(Math.cos(c.h - ax)) + (wid / 2) * Math.abs(Math.sin(c.h - ax));
-    const d = Math.abs((b.x - a.x) * ux + (b.n - a.n) * un);
-    if (d > proj(a) + proj(b)) return false;
-  }
-  return true;
-}
-
-describe('two lanes', () => {
-  const sa = createState();
-  const sb = createState();
-
-  it('the comparison car runs on its own lane: the two never overlap, in any question', () => {
-    for (const id of ['porsche-911-992', 'vw-golf-gti-mk8', 'bmw-m340i-g20', 'tesla-model3-rwd']) {
-      const v = getVehicle(id);
-      for (const scenario of HUB_ORDER) {
-        const [main, rival] = buildLineup(
-          v,
-          { scenario, compare: 'auto' },
-          SCENARIOS[scenario].speed.def,
-        ).map((e) => {
-          const l = laneOf(e);
-          l.simTo(e.plan.duration + 1);
-          return l;
-        });
-        const plan = main.plan;
-        const gap = plan.lanes.length ? plan.roadWidth + 0.5 : LANE_GAP;
-        rival.offset = chooseSide(main, rival, gap) * gap;
-        // the lanes themselves: the second the first's width and a gap to the side
-        expect(Math.abs(rival.offset)).toBeGreaterThanOrEqual(LANE_GAP);
-        const road = roadLayout(plan, rival.offset);
-        expect(road.width).toBeCloseTo(plan.roadWidth + Math.abs(rival.offset), 9);
-        // and the cars on them, at every moment of the run
-        const len = Math.max(main.p.dims.length, rival.p.dims.length);
-        const wid = Math.max(main.p.dims.width, rival.p.dims.width);
-        for (let t = 0; t <= plan.duration; t += 0.05) {
-          main.show(t);
-          rival.show(t);
-          Object.assign(sa, main.view);
-          Object.assign(sb, rival.view);
-          const a = { x: sa.x, n: sa.n, h: sa.yaw };
-          const b = { x: sb.x, n: sb.n, h: sb.yaw };
-          expect(overlap(a, b, len, wid), `${id} ${scenario} at ${t.toFixed(2)} s`).toBe(false);
-        }
-      }
-    }
-  });
-
-  it('a lane is drawn beside the plan’s path; the physics is the plan’s own', () => {
-    const v = getVehicle('porsche-911-992');
-    const [e] = buildLineup(v, { scenario: 'lift-off', compare: 'auto' }, 63);
-    const a = laneOf(e);
-    const b = laneOf(e);
-    b.offset = LANE_GAP;
-    a.simTo(e.plan.duration);
-    b.simTo(e.plan.duration);
-    for (const t of [2, 5, 7]) {
-      a.show(t);
-      b.show(t);
-      // the same car on the same corner drives the same: its yaw, speed and grip are untouched
-      expect(b.view.yaw).toBe(a.view.yaw);
-      expect(b.view.vx).toBe(a.view.vx);
-      expect(b.view.alphaR).toBe(a.view.alphaR);
-      // drawn a lane over, along the road's normal
-      expect(Math.hypot(b.view.x - a.view.x, b.view.n - a.view.n)).toBeCloseTo(LANE_GAP, 1);
-    }
-  });
-});
-
 describe('the visitor’s hands', () => {
   it('ramp the pedals and centre the wheel onto where the front axle travels', () => {
     const p = carParams(listVehicles().find((x) => familyOf(x) === 'FR')!);
@@ -234,17 +152,12 @@ describe('sim → world mapping', () => {
     expect(poseOrigin(p, st, g).x).toBeCloseTo(p.a - p.L / 2, 9);
   });
 
-  it('a left turn (yaw > 0) heads toward −Z, and a leftward force points to −Z', () => {
+  it('a left turn (yaw > 0) heads toward −Z', () => {
     // heading +90° (a quarter left turn from +X) points along the sim's +n, i.e. world −Z
     resetState(st, p, 0, 0, Math.PI / 2, 10);
     const before = poseOrigin(p, st, { x: 0, z: 0 }).z;
     st.n += 1;
     expect(poseOrigin(p, st, g).z).toBeLessThan(before);
-    resetState(st, p, 0, 0, 0, 10);
-    st.fy[RL] = 1000;
-    expect(wheelForce(st, RL, g).z).toBeLessThan(0);
-    expect(yawOf(1, 0)).toBeCloseTo(0, 9);
-    expect(yawOf(0, -1)).toBeCloseTo(Math.PI / 2, 9);
   });
 });
 
@@ -267,15 +180,5 @@ describe('the layout sketch', () => {
     // an electric car shows its motors
     const ev = sketchOf(getVehicle('tesla-model3-awd'));
     expect(ev.blocks.some((b) => b.kind === 'motor')).toBe(true);
-  });
-});
-
-describe('switching questions', () => {
-  it('clears what each car was doing, so nothing of the last question lingers', () => {
-    driveCars[0].status = 3;
-    driveCars[1].status = 2;
-    useDrive.getState().setScenario('trail-brake');
-    expect(driveCars.map((c) => c.status)).toEqual([0, 0]);
-    useDrive.getState().setScenario('lift-off');
   });
 });

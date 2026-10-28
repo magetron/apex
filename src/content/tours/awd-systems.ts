@@ -59,7 +59,7 @@ const tour: Tour = {
     },
     {
       id: 'transfer-case',
-      title: 'Off-road: lock everything',
+      title: 'Off-road: a low range',
       body: 'The G-Class adds a transfer case with a low-range gear set behind its gearbox. Its centre, rear and front differentials can all be locked, so every wheel keeps turning even when others hang in the air.',
       scene: {
         view: { vehicleId: 'mercedes-amg-g63-w465', level: 'internals' },

@@ -27,24 +27,6 @@ const POS_TEXT = {
   'rear-underfloor': 'under the boot floor at the rear',
 } as const;
 
-/** "Transverse Inline-4 turbo ahead of the front axle · front-wheel drive" */
-export function layoutSummary(v: VehicleSpec): string {
-  const pt = v.powertrain;
-  const drive =
-    pt.driven === 'all'
-      ? 'all-wheel drive'
-      : pt.driven === 'front'
-        ? 'front-wheel drive'
-        : 'rear-wheel drive';
-  if (pt.kind === 'ev') {
-    const n = pt.motors.length;
-    return `${n} electric motor${n > 1 ? 's' : ''}, ${pt.battery.kWh} kWh floor battery · ${drive}`;
-  }
-  const e = getEngine(pt.engine);
-  const orient = pt.orientation === 'transverse' ? 'Transverse' : 'Longitudinal';
-  return `${orient} ${e.name} ${POS_TEXT[pt.position]} · ${drive}`;
-}
-
 export type FactKind = 'orientation' | 'engine' | 'position' | 'drive' | 'motors' | 'battery';
 
 /** The layout as short facts (render as chips, not prose), always derived from the spec. */

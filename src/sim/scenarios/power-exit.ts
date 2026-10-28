@@ -5,14 +5,7 @@
  * car pushes until its coupling sends drive to the rear.
  */
 import { G } from '../model/params';
-import {
-  cornerPlan,
-  cornerResult,
-  lineVerdict,
-  SWING_EARLY,
-  withoutTechnique,
-  type CornerSpec,
-} from './corner';
+import { cornerPlan, lineVerdict, SWING_EARLY, withoutTechnique, type CornerSpec } from './corner';
 import type { ScenarioDef } from './types';
 
 /** the same forward-acceleration request for every car (g) */
@@ -52,6 +45,3 @@ export const powerExit: ScenarioDef = {
   baseline: { label: 'No throttle', plan: (kmh) => cornerPlan(withoutTechnique(SPEC), kmh) },
   verdict: lineVerdict,
 };
-
-export const powerExitResult = (tr: Parameters<typeof cornerResult>[0]) =>
-  cornerResult(tr, OPEN_LOOP_S);

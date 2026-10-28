@@ -176,7 +176,6 @@ export function TwinPath({ lane, t, color }: { lane: Lane; t: { now: number }; c
           const t = rec.get(i, 't');
           if (t > te + hold + DOT_AFTER) break;
           rec.frame(i, scan);
-          lane.place(scan, rec.sAt(i));
           const x = scan.x;
           const z = -scan.n;
           if (Number.isFinite(lx) && Math.hypot(x - lx, z - lz) < DOT_EVERY) continue;

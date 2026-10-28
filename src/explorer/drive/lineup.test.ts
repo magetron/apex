@@ -3,7 +3,7 @@ import { lateralLimit } from '../../sim/model';
 import { HUB_ORDER, runHeadless, SCENARIOS } from '../../sim/scenarios';
 import { getVehicle, listVehicles } from '../../spec/catalog';
 import type { VehicleSpec } from '../../spec/types';
-import { awdWords, buildLineup, laneOf, paramsOf } from './lineup';
+import { buildLineup, laneOf, paramsOf } from './lineup';
 import { familyOf, useDrive } from './state';
 import { chooseRival, KINDS, REAR_GRIP, rivalOptions } from './versus';
 
@@ -147,16 +147,6 @@ describe('the comparison that makes each question’s point', () => {
     expect(twin.p.rear.mu).toBeCloseTo(main.p.rear.mu * REAR_GRIP['less-rear'], 9);
     expect(lateralLimit(twin.p)).toBeLessThan(lateralLimit(main.p));
     expect(twin.run.ctl.vScale).toBeCloseTo(main.run.ctl.vScale, 9);
-  });
-
-  it('an all-wheel-drive car says its torque split, from the spec, as the sim uses it', () => {
-    for (const v of listVehicles().filter((x) => familyOf(x) === 'AWD'))
-      expect(awdWords(v)).toMatch(/\d+:\d+ front:rear|locked together/);
-    expect(awdWords(p911)).toBeUndefined();
-    // the GT-R: mainly rear-drive, 20:80, as its spec's device has it and the sim drives it
-    const gtr = getVehicle('nissan-gtr-r35');
-    expect(awdWords(gtr)).toMatch(/^mainly rear-drive \(20:80 front:rear\)/);
-    expect(paramsOf(gtr).drive.frontShare).toBeCloseTo(0.2, 6);
   });
 
   it('every car gets a comparison for every question', () => {

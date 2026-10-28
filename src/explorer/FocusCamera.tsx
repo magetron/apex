@@ -41,6 +41,7 @@ import {
   type Spot,
 } from './framing';
 import { freeWindow } from './freeWindow';
+import { useTour, type CameraAsk } from './tour/state';
 import type { Level, View } from './view';
 
 /** the car view with see-through on or off is one framing */
@@ -62,8 +63,8 @@ const FRAMING: Record<Scope, FrameOptions> = {
   track: {},
 };
 
-/** the breadcrumb and its hint: a framed car stays clear of them */
-const TRAIL = '.apx-dock--top-left > *';
+/** the breadcrumb and its hint (and a tour's bar): a framed car stays clear of them */
+const TRAIL = '.apx-dock--top-left > *, .apx-tour';
 
 /** Where the vehicle's engine (as swapped, if it is) shows its cylinder layout. */
 function engineAngles(vehicleId: string): FrameOptions | null {
@@ -302,7 +303,9 @@ export function FocusCamera({ view, compare = '' }: { view: View; compare?: stri
   const model = scope !== 'part' || !!view.part?.startsWith('wheel') ? ready : '-';
   // a zoomed part keeps clear of the panels as they grow (a fold opened in the hub)
   const room = useHudRoom(canvas, scope === 'part');
-  const key = `${view.vehicleId}|${scope}|${view.part ?? ''}|${model}|${explode}|${lens}|${outlines}|${compare}|${room}`;
+  // a tour step's angle (or the camera to put back as the tour ends)
+  const ask = useTour((s) => s.camera);
+  const key = `${view.vehicleId}|${scope}|${view.part ?? ''}|${model}|${explode}|${lens}|${outlines}|${compare}|${room}|${ask?.seq ?? 0}`;
   /**
    * The framing the view had before (scope, car, explode); whether the car has been framed since
    * arriving; and an angle still to fly to (a preset picked, a comparison ended, an engine
@@ -320,6 +323,9 @@ export function FocusCamera({ view, compare = '' }: { view: View; compare?: stri
     check: boolean;
     /** not before (performance.now()): a new car's parts sliding in, an explode spreading */
     settleBy: number;
+    /** a tour's ask still to frame by, and the last one taken */
+    ask: CameraAsk | null;
+    askSeq: number;
   }>({
     scope: null,
     vehicle: null,
@@ -330,6 +336,8 @@ export function FocusCamera({ view, compare = '' }: { view: View; compare?: stri
     angles: null,
     check: false,
     settleBy: 0,
+    ask: null,
+    askSeq: 0,
   });
   useEffect(() => {
     const prev = last.current.scope;
@@ -339,6 +347,10 @@ export function FocusCamera({ view, compare = '' }: { view: View; compare?: stri
     last.current.scope = scope;
     last.current.vehicle = view.vehicleId;
     last.current.explode = explode;
+    if (ask && ask.seq !== last.current.askSeq) {
+      last.current.askSeq = ask.seq;
+      last.current.ask = ask;
+    }
     const away = (s: Scope | null) => s === 'drive' || s === 'track';
     if (away(scope) || away(prev)) last.current.framed = false;
     if (scope === 'track') return;
@@ -375,13 +387,23 @@ export function FocusCamera({ view, compare = '' }: { view: View; compare?: stri
       const lost = last.current.check && !!end && !showsLayout(end.theta, end.phi);
       last.current.check = false;
       const angles = scope === 'car' || scope === 'part' ? last.current.angles : null;
+      // a tour's ask: an angle to frame from, or the camera exactly as it was before the tour
+      const asked = scope === 'car' || scope === 'part' ? last.current.ask : null;
       if (scope !== 'drive') last.current.framed = true;
       last.current.angles = null;
+      last.current.ask = null;
+      if (asked?.look && c) {
+        const [px, py, pz] = asked.look.position;
+        const [tx, ty, tz] = asked.look.target;
+        void c.setLookAt(px, py, pz, tx, ty, tz, true);
+        return;
+      }
       const o = {
         ...FRAMING[scope],
         ...(scope === 'drive' ? {} : heading),
         ...(arrive || lost ? ARRIVE : {}),
         ...(angles ?? {}),
+        ...(asked?.angles ?? {}),
       };
       // drive keeps a chase distance; elsewhere fit into the room the HUD leaves, clear of
       // the breadcrumb too (cars side by side seen from above stand as tall as they are long)

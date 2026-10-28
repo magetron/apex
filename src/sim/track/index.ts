@@ -12,7 +12,7 @@ import { getTrack } from './registry';
 import type { RaceLine, TrackPath } from './types';
 
 export type * from './types';
-export { buildPath, indexAt } from './geometry';
+export { buildPath } from './geometry';
 export { raceLine } from './raceline';
 export {
   DRIVER,

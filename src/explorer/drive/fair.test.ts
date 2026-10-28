@@ -1,7 +1,6 @@
 /**
  * Fair comparisons: every car asked for the same thing in g, so power-to-weight
- * doesn't sort the results; the pause is car A's own; a car B that spun is never talked over;
- * the lane change timed the standard way.
+ * doesn't sort the results; the pause is car A's own; the lane change timed the standard way.
  */
 import { describe, expect, it } from 'vitest';
 import type { CarParams } from '../../sim/model';
@@ -10,7 +9,7 @@ import { getVehicle } from '../../spec/catalog';
 import { findKey } from './key';
 import { Lane } from './lanes';
 import { buildLineup, laneOf, laneResult, paramsOf } from './lineup';
-import { carLine, lesson, type Outcome } from './takeaway';
+import type { Outcome } from './takeaway';
 
 /** The same car with its engine this many times as strong. */
 const withPower = (p: CarParams, k: number): CarParams => ({
@@ -79,60 +78,6 @@ describe('the pause is car A’s own moment', () => {
       expect(stops[1], id).toBeCloseTo(stops[0], 6);
       expect(stops[2], id).toBeCloseTo(stops[0], 6);
     }
-  });
-});
-
-describe('a car B that spun is never talked over', () => {
-  it('braking into a turn: "yes" for one car says the other spun', () => {
-    const base = {
-      model: '911',
-      code: 'RR',
-      driven: 'rear' as const,
-      front: 0.39,
-      frontMax: 0.4,
-      rollF: 0.44,
-      dynIndex: 1,
-      cgOverL: 0.18,
-      widerRear: true,
-      tyreF: 245,
-      tyreR: 305,
-      rearGrip: 1,
-      letGo: null,
-    };
-    const braked: Outcome = {
-      ...base,
-      verdict: 'tight',
-      spun: false,
-      values: { sameSpeedShift: 0.74 },
-    };
-    const spun: Outcome = {
-      ...base,
-      model: 'MX-5',
-      front: 0.5,
-      verdict: 'spin',
-      spun: true,
-      values: {},
-    };
-    const text = lesson('trail-brake', [braked, spun]);
-    expect(text).toMatch(/MX-5 spun/);
-    expect(text).toMatch(/^Yes for the 911/);
-  });
-});
-
-describe('a lift-off slide that was still growing is said so', () => {
-  it('never "swung out N° at most" for a tail still swinging as the held wheel ended', () => {
-    const def = SCENARIOS['lift-off'];
-    const lane = laneOf(
-      buildLineup(
-        getVehicle('mazda-mx5-nd'),
-        { scenario: 'lift-off', compare: 'auto' },
-        def.speed.def,
-      )[0],
-    );
-    lane.simTo(lane.plan.duration + 1);
-    const o = laneResult(lane).outcome!;
-    if (o.verdict === 'tail' && (o.values.swingRate ?? 0) > 1)
-      expect(carLine('lift-off', o)).toMatch(/by the end of the held wheel and still going/);
   });
 });
 

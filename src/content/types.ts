@@ -1,17 +1,17 @@
 /**
  * Content contract: tours are written as data and played by the tour player.
  * A tour is a sequence of explorer views (the same states a visitor reaches by clicking),
- * each with a short caption.
+ * each with a title of a few words: the scene does the explaining, the player shows no prose.
  */
 import type { View } from '../explorer/view';
 import type { CameraShot } from '../scene/store';
 
-/** Named camera framings every vehicle view understands (implemented per car). */
+/** Named camera framings every vehicle view understands (vehicle3d/camera.ts). */
 export type CameraPreset = 'front-3q' | 'rear-3q' | 'side' | 'top' | 'front' | 'rear' | 'underside';
 
 /** Overlays the vehicle view can draw. */
 export type OverlayKind =
-  | 'cg' // centre-of-gravity roundel
+  | 'cg' // centre of gravity
   | 'axle-loads' // front/rear load bars
   | 'dimensions' // wheelbase, track, overhangs
   | 'inertia' // "dumbbell" yaw-inertia visual
@@ -41,23 +41,26 @@ export interface TourScene {
    *  "engine/block", "engine/head-0") */
   highlight?: string[];
   overlays?: OverlayKind[];
-  /** optional explicit framing; default is the level's own framing */
+  /** optional explicit framing; default: the car view from its front three-quarter, a part as
+   *  it opens */
   camera?: CameraPreset | CameraShot;
   /** engine views */
   rpm?: number;
   timeScale?: number;
   sound?: boolean;
+  /** the engine's balance view */
   balance?: boolean;
-  /** drive views: scenario and layouts shown as ghost cars alongside */
+  /** drive views: the question, and car B as the one id in `ghosts` (none: the question's own
+   *  pick, often the same car without the technique) */
   drive?: { scenario: DriveScenario; ghosts?: string[] };
 }
 
 export interface TourStep {
   id: string;
-  /** a few words */
+  /** five words at most: all the player shows of the step, so it must be true of the scene */
   title: string;
-  /** Markdown, ≤ ~60 words, about what is on screen right now. Numbers come from the scene
-   *  (stats/labels), not from this text. */
+  /** authoring notes, ≤ ~60 words: what the scene shows and why. Never shown (the scene does
+   *  the explaining); numbers come from the scene (stats, labels), not from this text. */
   body: string;
   scene: TourScene;
 }

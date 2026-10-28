@@ -32,15 +32,6 @@ const KEYS: Record<string, keyof Pick<typeof held, 'gas' | 'brake' | 'left' | 'r
   ArrowRight: 'right',
 };
 
-export const anyHeld = () =>
-  held.gas ||
-  held.brake ||
-  held.left ||
-  held.right ||
-  held.touchGas > 0 ||
-  held.touchBrake > 0 ||
-  held.touchSteer !== 0;
-
 export function releaseAll() {
   held.gas = held.brake = held.left = held.right = false;
   held.touchGas = held.touchBrake = held.touchSteer = 0;

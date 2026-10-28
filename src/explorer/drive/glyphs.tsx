@@ -50,22 +50,6 @@ export const MAGNIFIER = (
   </svg>
 );
 
-/** Two links of a chain: a value copied from the other car (the twin's speed is car A's). */
-export const CHAIN = (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.4"
-    strokeLinecap="round"
-    aria-hidden
-    className="apx-drive-chain"
-  >
-    <path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1.2 1.2" />
-    <path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2" />
-  </svg>
-);
-
 /** One input, still: a pedal pressed `fill` of the way (the lift: none), or the wheel. */
 export function InputGlyph({
   input,
@@ -117,3 +101,11 @@ export const EVENT_INPUT: Partial<Record<ScenarioId, Input>> = {
   braking: 'brake',
   'lane-change': 'wheel',
 };
+
+const PEDALS: readonly Input[] = ['lift', 'gas', 'brake'];
+/** Whether a question's event is a pedal, which moves load between the axles (the body
+ *  pitches): its key moment is watched from the side (camera.ts), against the level. */
+export function movesLoad(id: ScenarioId): boolean {
+  const act = EVENT_INPUT[id];
+  return !!act && PEDALS.includes(act);
+}

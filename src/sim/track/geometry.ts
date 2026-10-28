@@ -220,7 +220,3 @@ export function buildPath(spec: TrackSpec, ds = 2): TrackPath {
     sectors: [0, ...spec.sectors],
   };
 }
-
-/** Index of the sample nearest centreline distance s (wrapping). */
-export const indexAt = (path: TrackPath, s: number) =>
-  ((Math.round(s / path.ds) % path.n) + path.n) % path.n;

@@ -1,30 +1,19 @@
 /**
  * Rendered inside the Canvas in drive mode. Builds a lane for the visitor's car and one for the
- * car it is compared with, side by side, drives them through the scenario and plays the result
- * back on one clock: the scripted cars are simulated up front (so the timeline can be scrubbed
- * anywhere at once), the visitor's car is simulated live when they drive it. At the key moment
- * it stops by itself and publishes the freeze frame (cause next to effect). Writes vehiclePose
- * so the explorer's own car drives, rolls and pitches, feeds engineRuntime for the sound, and
- * draws the two-lane road, the steps of the manoeuvre, both cars' lines and balance, and the
- * comparison car.
+ * car it is compared with (on car A's own line, drawn just behind it), drives them through the
+ * scenario and plays the result back on one clock: the scripted cars are simulated up front (so
+ * the timeline can be scrubbed anywhere at once), the visitor's car is simulated live when they
+ * drive it. At the key moment it stops by itself and publishes the freeze frame (cause next to
+ * effect). Writes vehiclePose so the explorer's own car drives, rolls and pitches, feeds
+ * engineRuntime for the sound, and draws the road, the grip rings, the engines through the
+ * bodies, the comparison car and the cars' tags.
  */
 import { useFrame } from '@react-three/fiber';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { engineRuntime, vehiclePose } from '../../scene/runtime';
 import { useTheme } from '../../scene/theme';
-import {
-  axleUse,
-  betaOf,
-  createState,
-  DT,
-  engineRpm,
-  FL,
-  frontLoadOf,
-  G,
-  RL,
-  speedOf,
-} from '../../sim/model';
+import { axleUse, betaOf, DT, engineRpm, FL, frontLoadOf, G, RL, speedOf } from '../../sim/model';
 import { SCENARIOS, type PathPoint } from '../../sim/scenarios';
 import type { VehicleSpec } from '../../spec/types';
 import { Balance } from './Balance';
@@ -33,29 +22,19 @@ import { DRIVE_COLORS } from './colors';
 import { CatchMarks, GripRings, TwinPath } from './Cues';
 import { EVENT_INPUT, TWIN_LEAVES } from './glyphs';
 import { EngineBlocks } from './Engine';
-import { Forces } from './Forces';
-import {
-  curvature,
-  freezeFrame,
-  judge,
-  LEAD,
-  useFreeze,
-  VERDICTS,
-  type FreezeFrame,
-  type Judged,
-} from './freeze';
+import { freezeFrame, useFreeze, type FreezeFrame } from './freeze';
 import { Hands, useDriveKeys } from './input';
 import { autoRate, findKey, laneKeyTime, type KeyMoment } from './key';
-import { apartFade, chooseSide, laneStep, LANE_GAP, slidAt, STAGGER } from './lanes';
+import { apartFade, slidAt, STAGGER } from './lanes';
+import { Level } from './Level';
 import { CLOCK_PRIORITY, frameDt } from './motion';
-import { GHOST_SAME_LANE, GHOST_SIDE_LANE, PoseRim } from './DetailedCar';
+import { PoseRim } from './DetailedCar';
 import { balanceOf, CarLabel, RivalCar } from './LaneCar';
 import { buildLineup, laneColor, laneOf, laneResult, useDriveResults } from './lineup';
 import { pairLanes } from './twin';
-import { testEnd } from './hands';
 import { buildPicture, REPLAY_FIRST, usePathPicture } from './picture';
 import { MATCHED } from './takeaway';
-import { Road, roadLayout } from './Road';
+import { Road } from './Road';
 import {
   capKmh,
   driveCars,
@@ -86,10 +65,6 @@ const LIVE_MAX_STEPS = 48;
 const DEG = 180 / Math.PI;
 const pt: Ground = { x: 0, z: 0 };
 const NONE: readonly string[] = [];
-const judged: Judged = { verdict: 'holding', turn: 0 };
-/** verdicts where an end let go, which can still come after the scenario's stretch */
-const LET_GO: readonly string[] = ['front', 'rear', 'spun', 'caught', 'back', 'catching'];
-const scratch = createState();
 const bend: PathPoint = { x: 0, n: 0, h: 0, k: 0 };
 /** catching a slide: from this long before car A's rear lets go (s of sim) to the catch, the
  *  slow motion slowed this much more (to ⅛ of real time): the slide begins, then it is caught */
@@ -112,10 +87,8 @@ export function DriveScene({
   const kmh = useDrive((s) => capKmh(s.scenario, s.speed[s.scenario]));
   const compare = useDrive((s) => s.compare);
   const esc = useDrive((s) => s.esc);
-  const forces = useDrive((s) => s.forces);
   const runId = useDrive((s) => s.runId);
   const mode = useDrive((s) => s.mode);
-  const cameraMode = useDrive((s) => s.camera);
 
   const pickedId = picked.at(-1) ?? '';
   const lineup = useMemo(
@@ -133,10 +106,6 @@ export function DriveScene({
   }, [lineup, esc, runId]);
   const [main, rival] = lanes;
   const plan = main.plan;
-  // car B a ghost on car A's own line by default; side by side, a lane over (a lane change's
-  // road already has two lanes: the second car gets a road of its own)
-  const laneMode = useDrive((s) => s.lanes);
-  const gap = laneMode === 'same' ? 0 : plan.lanes.length ? plan.roadWidth + 0.5 : LANE_GAP;
   const hands = useMemo(() => new Hands(), []);
   const clock = useMemo(() => ({ now: 0 }), []);
   const epoch = useMemo(() => ({ n: 0 }), []);
@@ -151,7 +120,6 @@ export function DriveScene({
     () => ({
       key: null as KeyMoment | null,
       events: [NaN, NaN],
-      curves: [0, 0],
       /** when each car first slid (as its summary judges it), Infinity if it never did */
       slid: [Infinity, Infinity],
       /** the freeze frame at each of the key moment's stops, worked out with the run */
@@ -162,8 +130,6 @@ export function DriveScene({
     }),
     [],
   );
-  /** the comparison car's lane: how far to which side of the visitor's (m, + = left) */
-  const [offset, setOffset] = useState(gap);
 
   /** Run every lane from the start: scripted ones to the end at once, the visitor's live. */
   const start = useCallback(
@@ -191,23 +157,14 @@ export function DriveScene({
       }
       // braking into a turn beside car A without the brake: car B at car A's own speed
       pairLanes(lanes);
-      // the side where the two cars stay furthest apart (unknown ahead of a visitor's own run)
-      rival.offset = (live ? 1 : chooseSide(main, rival, gap)) * gap;
       // on car A's own line, car B is drawn just behind it: the two never sit on each other
-      rival.behind = gap === 0 ? STAGGER * main.p.dims.length : 0;
+      rival.behind = STAGGER * main.p.dims.length;
       rival.show(0);
-      setOffset(rival.offset);
       focus.key = findKey(SCENARIOS[plan.id], lanes, live);
       // when each car's line starts to say something: its event (on the skidpad, its let-go)
       focus.events = lanes.map((l) =>
         l.run.manual ? NaN : laneKeyTime(l, SCENARIOS[plan.id].key),
       );
-      // the line each car was on just before the cause, to tell tighter from wider
-      focus.curves = lanes.map((l, i) => {
-        if (!Number.isFinite(focus.events[i])) return 0;
-        l.rec.sample(Math.max(0, focus.events[i] - LEAD), scratch);
-        return curvature(scratch);
-      });
       focus.slid = lanes.map((l) => (l.run.manual ? Infinity : slidAt(l)));
       // each stop's freeze frame, ready before it is reached: the cars' tags say its verdicts
       // in a word from that stop on, whether or not the run stops there
@@ -224,22 +181,6 @@ export function DriveScene({
         plan.id === 'catch' && !live && lg && key
           ? [lg.t - SLIDE_LEAD, key.freeze[0] ?? lg.t + SLIDE_LEAD]
           : [NaN, NaN];
-      // where the load was just before each driver's action: it is seen moving from there
-      lanes.forEach((l, i) => {
-        const tb = key?.before[i] ?? NaN;
-        if (Number.isFinite(tb)) {
-          l.rec.sample(Math.max(0, tb - LEAD), scratch);
-          driveCars[i].frontBefore = frontLoadOf(scratch);
-        } else driveCars[i].frontBefore = NaN;
-      });
-      // when each car's part of the test is over: its hands say so from then
-      lanes.forEach((l, i) => {
-        const c = driveCars[i];
-        c.twin = l.info.rival === 'without';
-        const end = l.run.manual ? { t: Infinity, spun: false } : testEnd(plan.id, l, c.twin);
-        c.over = end.t;
-        c.overSpun = end.spun;
-      });
       drivePlayback.key = focus.key;
       drivePlayback.duration = plan.duration;
       drivePlayback.marks = main.marks.map((m) => ({
@@ -270,7 +211,7 @@ export function DriveScene({
           pic: buildPicture(plan.id, lanes, focus.key, outcomes, rival.info.rival === 'without'),
         });
     },
-    [lanes, main, rival, plan, gap, lineup, hands, clock, epoch, loop, focus, replay, vehicle, kmh],
+    [lanes, main, rival, plan, lineup, hands, clock, epoch, loop, focus, replay, vehicle, kmh],
   );
 
   useEffect(() => {
@@ -369,9 +310,6 @@ export function DriveScene({
     const pace = auto ? autoRate(focus.key, clock.now) * (sliding ? SLIDE_RATE : 1) : rate;
     const dur = plan.duration;
     const pb = drivePlayback;
-    const stretch = SCENARIOS[plan.id].key.after;
-    const fz = focus.key?.freeze;
-    const lastFreeze = fz && fz.length ? fz[fz.length - 1] : 0;
 
     if (pb.seek !== null) {
       clock.now = Math.max(0, Math.min(live ? main.head : dur, pb.seek));
@@ -486,32 +424,10 @@ export function DriveScene({
       const l = lanes[i];
       l.show(clock.now);
       const c = driveCars[i];
-      // the visitor's own car: from its event on, once they get there
-      const tE = live && i === 0 ? l.run.ctl.tEvent : focus.events[i];
-      if (clock.now >= tE) {
-        // the line is judged over the scenario's stretch, then kept: once the driver takes the
-        // wheel back, or the road straightens, it says nothing more about the cause
-        // (kept from the freeze frame, where there is one, so the two always agree)
-        const tw = Math.min(clock.now, lastFreeze || tE + stretch);
-        l.rec.sample(tw, scratch);
-        judge(plan.id, l, scratch, tw, focus.curves[i], judged);
-        if (tw < clock.now && !LET_GO.includes(judged.verdict) && (l.view.spun || l.letGo))
-          judge(plan.id, l, l.view, clock.now, focus.curves[i], judged);
-        c.status = 1 + VERDICTS.indexOf(judged.verdict);
-        c.turn = judged.turn;
-      } else c.status = 0;
-      c.step = laneStep(l, clock.now);
-      c.kmh = speedOf(l.view) * 3.6;
-      c.front = frontLoadOf(l.view);
-      c.useF = axleUse(l.view, FL);
-      c.useR = axleUse(l.view, RL);
-      // the driver's hands and feet, and which way the road turns there (opposite lock)
+      // the driver's hands, and which way the road turns there (opposite lock)
       c.steerDeg = l.view.steer * DEG;
-      c.throttle = l.view.throttle;
-      c.brake = l.view.brake;
       const k = l.plan.path.at(l.rec.sAtTime(clock.now), bend).k;
       c.turnSign = Math.abs(k) < 1e-4 ? 0 : Math.sign(k);
-      c.phase = live && i === 0 ? -1 : l.phase;
       // a car that slid, as its summary judges it: only then is steering out of the turn
       // opposite lock (the visitor's own car: once its rear has let go)
       c.slid =
@@ -519,7 +435,7 @@ export function DriveScene({
         (live && i === 0 ? l.letGoBy(clock.now)?.axle === 'rear' : clock.now >= focus.slid[i]);
     }
     // car B on car A's own line, caught up with car A: faded out rather than drawn over it
-    rival.fadeTo(useDrive.getState().lanes === 'same' ? apartFade(main, rival) : 1, dt);
+    rival.fadeTo(apartFade(main, rival), dt);
 
     // ease the view out just before each cut (to the replay, and back to the start) and back in
     // just after
@@ -588,34 +504,27 @@ export function DriveScene({
     }
   }, CLOCK_PRIORITY);
 
-  const pair = useMemo(() => ({ rival, focus, t: clock, replay }), [rival, focus, clock, replay]);
-  useDriveCamera(main, plan, cameraMode, epoch, offset, pair);
+  // braking into a turn beside the same car at its speed: car B is only its path (dotted), and
+  // the camera frames car A alone
+  const pathOnly = MATCHED.includes(plan.id) && rival.info.rival === 'without';
+  const pair = useMemo(
+    () => ({ rival: pathOnly ? main : rival, focus, t: clock, replay }),
+    [pathOnly, main, rival, focus, clock, replay],
+  );
+  useDriveCamera(main, plan, epoch, pair);
 
-  const layout = useMemo(() => roadLayout(plan, offset), [plan, offset]);
   // tarmac behind the start for car B, drawn behind car A on its line, and for both cars' tails
-  const runIn = (gap === 0 ? STAGGER : 0) * main.p.dims.length + main.p.dims.length;
+  const runIn = (STAGGER + 1) * main.p.dims.length;
   const k = build.current;
   const you = laneColor(main.info, colors);
   const them = laneColor(rival.info, colors);
-  const lineColors = useMemo(() => [you, them], [you, them]);
-  // braking into a turn beside the same car at its speed: the two speeds, on the cars
-  // braking into a turn beside the same car at its speed: car B is only its path (dotted)
-  const pathOnly = MATCHED.includes(plan.id) && rival.info.rival === 'without';
   // car B is car A itself, changed (without the action, or its rear grip changed)
   const same = rival.info.rival !== 'contrast' && rival.info.rival !== 'car';
   // what each car's driver does at its moment, popped over it (the twin without it does none)
   const acts = plan.id === 'catch' ? 'wheel' : (EVENT_INPUT[plan.id] ?? null);
   return (
     <>
-      {/* the road; a lane over, each car's planned line in its colour */}
-      <Road
-        plan={plan}
-        colors={colors}
-        layout={layout}
-        lineColors={offset ? lineColors : undefined}
-        planned={!!offset}
-        runIn={runIn}
-      />
+      <Road plan={plan} colors={colors} runIn={runIn} />
       {/* round every tyre, a ring: green, amber near the limit, red once that end has let go */}
       {lanes.map((l, i) =>
         i === 1 && pathOnly ? null : (
@@ -639,7 +548,6 @@ export function DriveScene({
           sideways={false}
         />
       )}
-      {forces && <Forces run={main} colors={colors} />}
       {/* where each car's mass sits, seen through its body: its engine (or motors and battery) */}
       <EngineBlocks key={`e${k}-0`} lane={main} vehicle={vehicle} />
       {rival.info.vehicle && !pathOnly && (
@@ -651,12 +559,14 @@ export function DriveScene({
           lane={rival}
           vehicle={rival.info.vehicle}
           color={them}
-          ghost={laneMode === 'same' ? GHOST_SAME_LANE : GHOST_SIDE_LANE}
           steerScale={plan.id === 'catch' ? STEER_SHOWN : 1}
         />
       )}
       {/* a rim round each car in its colour */}
       <PoseRim vehicle={vehicle} color={you} />
+      {/* from the side round the key moment, where each body sits at rest: its pitch shows */}
+      <Level key={`lv${k}-0`} lane={main} color={colors.mark} />
+      {!pathOnly && <Level key={`lv${k}-1`} lane={rival} color={colors.mark} />}
       {/* one tag per car (its name, its driver's action popped as it happens, from the key
           moment its outcome in a word), beside it on screen, clear of the other car and the HUD */}
       <CarLabel

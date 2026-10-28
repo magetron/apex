@@ -4,9 +4,9 @@
  * grip. The scene advances every lane to the playhead; a lane only simulates the stretch it
  * hasn't driven yet, so going back in time just replays the recording.
  *
- * Two cars run side by side on parallel lanes. Both drive the plan's own path (the same corner,
- * the same physics); the comparison car is drawn `offset` metres to the side of it, along the
- * road's normal, so the two never overlap on screen.
+ * Both cars drive the plan's own path (the same corner, the same physics); the comparison car is
+ * drawn a little behind the visitor's on the same line (`behind`), so the two never sit on each
+ * other.
  */
 import {
   axleUse,
@@ -29,7 +29,7 @@ export type LaneKind = 'main' | 'rival';
 /** The first time an axle used all its grip for a moment: which one, where, and at what g. */
 export interface LetGo {
   t: number;
-  /** where (the plan's ground frame, before the lane's offset) and how far along the path */
+  /** where (the plan's ground frame, as driven) and how far along the path */
   x: number;
   n: number;
   s: number;
@@ -75,8 +75,6 @@ export class Lane {
   /** when this car passed each of the plan's marks (s of sim time), NaN until it does */
   readonly markT: number[];
   readonly marks: Mark[];
-  /** sideways from the plan's path to this car's lane (m, + = left): drawn, not simulated */
-  offset = 0;
   /** the car as built, for a tuned twin (more or less rear grip) */
   asBuilt?: CarParams;
   /**
@@ -85,9 +83,6 @@ export class Lane {
    * far back, the same way round the line): the run, its numbers and its moment are its own.
    */
   behind = 0;
-  /** a straight road: the lane is the path moved sideways as a whole (a lane change keeps its
-   *  shape); a curved one: every point moved along the road's normal (concentric corners) */
-  private readonly straight: boolean;
   private overF = 0;
   private overR = 0;
   private steps = 0;
@@ -116,7 +111,6 @@ export class Lane {
     this.run = new ScenarioRun(p, plan, esc, ayRef);
     this.marks = plan.marks?.(this.run.ctl.vScale) ?? [];
     this.markT = this.marks.map(() => NaN);
-    this.straight = plan.road.ks.every((k) => k === 0);
     this.reset();
   }
 
@@ -209,21 +203,10 @@ export class Lane {
     }
   }
 
-  /** Draw state at time t (what's recorded; the live edge at most), on this car's lane. */
+  /** Draw state at time t (what's recorded; the live edge at most), `behind` back. */
   show(t: number) {
     this.phase = this.rec.sample(t, this.view);
-    const s = this.rec.sAtTime(t);
-    this.place(this.view, s);
-    if (this.behind) this.moveBack(this.view, s);
-  }
-
-  /** The car as drawn at time t (on its lane, `behind` back), into `out`. */
-  drawAt(t: number, out: CarState): CarState {
-    this.rec.sample(t, out);
-    const s = this.rec.sAtTime(t);
-    this.place(out, s);
-    if (this.behind) this.moveBack(out, s);
-    return out;
+    if (this.behind) this.moveBack(this.view, this.rec.sAtTime(t));
   }
 
   /** Move a drawn car `behind` back along the path, turned with it (lanes.ts `behind`). */
@@ -246,36 +229,6 @@ export class Lane {
     st.x = bx + c * rx - sn * rn;
     st.n = bn + sn * rx + c * rn;
     st.yaw += dh;
-  }
-
-  /**
-   * The time this car's trail is drawn up to at time t: where the drawn car is (`behind` back
-   * along the path), so its line ends at it.
-   */
-  drawnTime(t: number): number {
-    if (!this.behind) return t;
-    const rec = this.rec;
-    const target = rec.sAtTime(t) - this.behind;
-    let lo = 0;
-    let hi = rec.indexAt(t);
-    if (hi <= 0 || rec.sAt(0) >= target) return rec.t0 - 1;
-    while (hi - lo > 1) {
-      const mid = (lo + hi) >> 1;
-      if (rec.sAt(mid) <= target) lo = mid;
-      else hi = mid;
-    }
-    return rec.get(lo, 't');
-  }
-
-  /** Move a state recorded at arc length s from the plan's path onto this car's lane. */
-  place(st: Pick<CarState, 'x' | 'n'>, s: number) {
-    if (!this.offset) return st;
-    const road = this.plan.road;
-    // the skidpad's road is one lap of a path that goes round several times
-    const at = road.at(this.straight ? 0 : s % road.length, tmp);
-    st.x -= Math.sin(at.h) * this.offset;
-    st.n += Math.cos(at.h) * this.offset;
-    return st;
   }
 
   /** Drive again from the start with the script up to time t, dropping what came after: the
@@ -324,15 +277,6 @@ export function slidAt(lane: Lane): number {
   return Infinity;
 }
 
-/** The manoeuvre step a lane is in at time t (index into its marks), −1 before the first. */
-export function laneStep(lane: Lane, t: number): number {
-  let now = -1;
-  for (let i = 0; i < lane.marks.length; i++) if (lane.markT[i] <= t) now = i;
-  return now;
-}
-
-/** the comparison car's lane, beside the visitor's (m): room for both cars and a gap */
-export const LANE_GAP = 5;
 /** car B on car A's line is drawn this many of car A's lengths behind it */
 export const STAGGER = 1.5;
 /** a car faded this far (Lane.drawn) is not drawn at all */
@@ -367,34 +311,4 @@ export function apartFade(a: Lane, b: Lane): number {
   bodyMiddle(b, gb);
   const d = Math.hypot(gb.x - ga.x, gb.z - ga.z) / len;
   return Math.max(0, Math.min(1, (d - APART_GONE) / (APART_CLEAR - APART_GONE)));
-}
-
-const sa = createState();
-const sb = createState();
-
-/**
- * Which side of the visitor's car the comparison car's lane goes (+1 left, −1 right): the side
- * where the two stay furthest apart over both recordings (a car that spins slides into the turn,
- * one that runs wide out of it). The inside of the turn when it makes no difference.
- */
-export function chooseSide(main: Lane, rival: Lane, gap: number): 1 | -1 {
-  const end = Math.min(main.head, rival.head);
-  const saved = rival.offset;
-  let left = Infinity;
-  let right = Infinity;
-  for (let t = 0; t <= end; t += 0.05) {
-    main.rec.sample(t, sa);
-    main.place(sa, main.rec.sAtTime(t));
-    const s = rival.rec.sAtTime(t);
-    for (let side = 1; side >= -1; side -= 2) {
-      rival.rec.sample(t, sb);
-      rival.offset = side * gap;
-      rival.place(sb, s);
-      const d = Math.hypot(sb.x - sa.x, sb.n - sa.n);
-      if (side > 0) left = Math.min(left, d);
-      else right = Math.min(right, d);
-    }
-  }
-  rival.offset = saved;
-  return right > left + 0.5 ? -1 : 1;
 }

@@ -13,17 +13,14 @@ import type { Family } from './state';
 export interface DriveColors {
   road: string;
   roadEdge: string;
-  line: string;
-  /** a tyre or axle gripping (wedges, tyre marks): quiet */
+  /** a tyre or axle gripping (the wedges): quiet */
   grip: string;
   /** a tyre with grip to spare (the ring under it) */
   ok: string;
   /** a tyre near its limit (the ring under it) */
   limit: string;
-  /** an axle that let go: wedges, tyre marks, rings, pins */
+  /** an axle that let go: wedges, rings, pins */
   slide: string;
-  /** friction circles (tyre forces) */
-  ring: string;
   cone: string;
   /** the visitor's own car: its line, its label, its row */
   you: string;
@@ -31,50 +28,36 @@ export interface DriveColors {
   rival: string;
   /** road markings for the manoeuvre's steps */
   mark: string;
-  /** the stretch where the driver holds the wheel still (the event zone) */
-  zone: string;
   /** where the front wheels are steered (the arrow on the car while catching a slide) */
   steer: string;
-  shadow: string;
-  shadowOpacity: number;
 }
 
 export const DRIVE_COLORS: Record<Theme, DriveColors> = {
   dark: {
     road: '#111a24',
     roadEdge: '#2c3e52',
-    line: '#3d556d',
     grip: '#6b7c8f',
     ok: '#3ccf8e',
     limit: '#ffb703',
     slide: '#ff5a52',
-    ring: '#8496aa',
     cone: '#c9d2dc',
     you: '#e6edf3',
     rival: '#b4a5ff',
     mark: '#7d8fa3',
-    zone: '#9fb3c8',
     steer: '#7fdbff',
-    shadow: '#000000',
-    shadowOpacity: 0.55,
   },
   light: {
     road: '#d4dce5',
     roadEdge: '#a7b6c6',
-    line: '#8ea2b6',
     grip: '#8a99aa',
     ok: '#169c5f',
     limit: '#d98a00',
     slide: '#d33a32',
-    ring: '#6e8196',
     cone: '#5f6f80',
     you: '#0f1720',
     rival: '#6347d1',
     mark: '#71859a',
-    zone: '#5f748a',
     steer: '#0b7fb3',
-    shadow: '#0f1720',
-    shadowOpacity: 0.28,
   },
 };
 

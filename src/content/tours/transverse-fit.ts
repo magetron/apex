@@ -29,7 +29,7 @@ const tour: Tour = {
     },
     {
       id: 'inline-6',
-      title: 'Six in a row',
+      title: 'Six won’t fit across',
       body: 'An inline-6 is longer again. Only a handful of production cars ever carried one sideways, with unusually compact gearboxes. Watch how much of the bay it takes.',
       scene: {
         view: { vehicleId: 'vw-golf-gti-mk8', level: 'internals' },
@@ -40,7 +40,7 @@ const tour: Tour = {
     },
     {
       id: 'vr6',
-      title: 'The VR6 answer',
+      title: 'VR6: six that fits',
       body: 'VW’s answer: the VR6. Its cylinders zig-zag in one block at a very narrow angle, so six cylinders take barely more length than four. It was invented to fit a six across a Golf or Passat.',
       scene: {
         view: { vehicleId: 'vw-golf-gti-mk8', level: 'internals' },
@@ -61,7 +61,7 @@ const tour: Tour = {
     },
     {
       id: 'v8',
-      title: 'A V8 goes wide',
+      title: 'A V8 crowds the bay',
       body: 'A V8 is short but wide and heavy. Transverse V8s exist in larger cars with narrow-angle blocks, but in a Golf’s bay the banks crowd the bulkhead and radiator. Check the outline.',
       scene: {
         view: { vehicleId: 'vw-golf-gti-mk8', level: 'internals' },

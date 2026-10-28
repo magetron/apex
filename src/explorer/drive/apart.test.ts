@@ -23,7 +23,6 @@ function sameLine(id: string, sc: ScenarioId): [Lane, Lane] {
   }
   pairLanes(lanes);
   const [main, rival] = lanes;
-  rival.offset = 0;
   rival.behind = STAGGER * main.p.dims.length;
   return [main, rival];
 }

@@ -14,7 +14,7 @@ const tour: Tour = {
     {
       id: 'x-ray',
       title: 'Mid-engined',
-      body: 'The V10 sits lengthwise behind the seats and ahead of the rear axle, inside the wheelbase. Watch the CG roundel: it lands just behind the middle of the car.',
+      body: 'The V10 sits lengthwise behind the seats and ahead of the rear axle, inside the wheelbase: the centre of gravity lands just behind the middle of the car.',
       scene: {
         view: { vehicleId: 'audi-r8-v10-gen2', level: 'internals' },
         highlight: ['engine'],
@@ -53,8 +53,8 @@ const tour: Tour = {
     },
     {
       id: 'low-v8',
-      title: 'Low and light',
-      body: 'Inside the F8’s engine: a flat-plane V8 with a dry sump, so the crank sits low in the car and the whole mass stays close to the road.',
+      title: 'A flat-plane crank',
+      body: 'Inside the F8 engine: a flat-plane V8, its crank pins all in one plane like two inline-4s on one crank. A dry sump lets it sit low in the car.',
       scene: {
         view: { vehicleId: 'ferrari-f8-tributo', level: 'part', part: 'engine' },
         highlight: ['engine/crank'],

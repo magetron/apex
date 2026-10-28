@@ -3,7 +3,7 @@
  * steering held still for 2 s. Load moves forward, the rear tyres lose grip and engine
  * braking eats into what's left: a tail-heavy car's yaw rate spikes.
  */
-import { cornerPlan, cornerResult, LINE_M, withoutTechnique, type CornerSpec } from './corner';
+import { cornerPlan, LINE_M, withoutTechnique, type CornerSpec } from './corner';
 import type { ScenarioDef, ScenarioResult } from './types';
 
 export const LIFT_HOLD_S = 2;
@@ -43,9 +43,6 @@ export const liftOff: ScenarioDef = {
   baseline: { label: 'No lift', plan: (kmh) => cornerPlan(withoutTechnique(SPEC), kmh) },
   verdict: liftVerdict,
 };
-
-export const liftOffResult = (tr: Parameters<typeof cornerResult>[0]): ScenarioResult =>
-  cornerResult(tr, LIFT_HOLD_S, 'yawSpike');
 
 /** The tail swinging out (or round) is the story here; a car that only tightens turns in,
  *  judged by where its line ended against the one the driver aimed for. */

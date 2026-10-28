@@ -8,9 +8,8 @@ import { create } from 'zustand';
 import { getEngine, getMotor, listVehicles, findVehicle } from '../../spec/catalog';
 import { massProps } from '../../spec/derive/mass';
 import { HUB_ORDER, SCENARIOS, type Mark, type ScenarioId } from '../../sim/scenarios';
-import { REF_LATERAL_LIMIT } from '../../sim/model';
 import type { VehicleSpec } from '../../spec/types';
-import { VERDICTS, type Verdict } from './freeze';
+import type { Verdict } from './freeze';
 import type { KeyMoment } from './key';
 import type { CompareKind } from './versus';
 
@@ -99,11 +98,6 @@ export const RATES = [1, 0.5, 0.25, 0.125] as const;
 export type Rate = (typeof RATES)[number];
 /** who drives the visitor's car: the scripted test driver, or the visitor (keys/touch) */
 export type DriveMode = 'watch' | 'drive';
-/** chase behind the car, or look straight down on the whole manoeuvre */
-export type CameraMode = 'chase' | 'top';
-/** car B as a see-through ghost on car A's own line (both start the same, one camera holds
- *  both, lines parting show directly), or a lane over */
-export type LaneMode = 'same' | 'side';
 
 export interface DriveSettings {
   scenario: ScenarioId;
@@ -113,8 +107,6 @@ export interface DriveSettings {
    *  visitor's choice stays put across questions where the question offers it */
   compare: CompareKind;
   mode: DriveMode;
-  camera: CameraMode;
-  lanes: LaneMode;
   playing: boolean;
   rate: Rate;
   /** slow down around each scenario's key moment by itself, until the visitor picks a rate */
@@ -122,7 +114,6 @@ export interface DriveSettings {
   /** stop at the key moment and show cause next to effect */
   autoPause: boolean;
   esc: boolean;
-  forces: boolean;
   /** the extra controls shown: pedals and revs, sound, stability control, rates */
   more: boolean;
   /** bump to restart the run */
@@ -164,25 +155,16 @@ export const useDrive = create<DriveSettings>()((set, get) => ({
   ) as Record<ScenarioId, number>,
   compare: 'auto',
   mode: 'watch',
-  camera: 'chase',
-  lanes: 'same',
   playing: true,
   rate: 1,
   autoSlow: true,
   autoPause: true,
   esc: false,
-  forces: false,
   more: false,
   runId: 0,
   picking: false,
-  // the visitor's car B stays put from question to question; nothing else of the last lingers
-  setScenario: (scenario) => {
-    for (const c of driveCars) {
-      c.status = 0;
-      c.step = -1;
-    }
-    set({ scenario, playing: true });
-  },
+  // the visitor's car B stays put from question to question
+  setScenario: (scenario) => set({ scenario, playing: true }),
   setSpeed: (kmh) =>
     set({ speed: { ...get().speed, [get().scenario]: capKmh(get().scenario, kmh) } }),
   keepStandIns: () => {},
@@ -214,12 +196,6 @@ const STEER_DRAWN_MAX = (40 * Math.PI) / 180;
 /** A road-wheel angle (rad) as drawn, `scale` times its size, within full lock. */
 export const shownSteer = (rad: number, scale: number) =>
   Math.max(-STEER_DRAWN_MAX, Math.min(STEER_DRAWN_MAX, rad * scale));
-/** What each question draws larger than life, besides every body's pitch (no longer shown on
- *  its own: the timeline's one chip covers them). */
-export const SHOWN_WHAT: Partial<Record<ScenarioId, string>> = {
-  braking: 'nose dip',
-  catch: 'wheel angles',
-};
 
 /** Each question's short name, as the rail lists it (the full question is the card's title);
  *  the car view's lesson buttons name the ones they share the same way (panels/lessons.ts). */
@@ -233,13 +209,6 @@ export const SHORT_NAME: Record<ScenarioId, string> = {
   skidpad: 'Find the limit',
   'lane-change': 'Change direction',
 };
-
-/** Share of the reference car's grip a corner speed uses (grip-scaled scenarios), else null. */
-export function gripShare(id: ScenarioId, kmh: number): number | null {
-  const def = SCENARIOS[id];
-  if (!def.radius) return null;
-  return (kmh / 3.6) ** 2 / def.radius / REF_LATERAL_LIMIT;
-}
 
 // ── live telemetry and playback (scene → HUD) ──────────────────────────────────────────
 export const driveTelemetry = {
@@ -274,47 +243,17 @@ export const driveTelemetry = {
   fade: 0,
 };
 
-/** What a car is doing right now: the step it is in before the
- *  cause, then the freeze frame's verdict (freeze.ts VERDICTS, offset by one). */
-export const CAR_STATUS = ['step', ...VERDICTS] as const;
-
 /** Per car on the road (0 = the visitor's, 1 = the comparison), written every frame. */
 export const driveCars = [0, 1].map(() => ({
-  /** index into CAR_STATUS */
-  status: 0,
-  /** how much tighter (+) or wider (-) it turns than before the cause (share) */
-  turn: 0,
-  /** the manoeuvre step it is in (index into its marks), −1 before the first */
-  step: -1,
-  /** share of the weight on the front axle (0..1) */
-  front: 0.5,
-  /** grip in use at each axle (0..1+) */
-  useF: 0,
-  useR: 0,
-  /** the driver's hands and feet: the steering asked for (road-wheel deg, + = left; the same
-   *  measure as the run's "opposite lock" summary) and the pedals (0..1) */
+  /** the driver's hands: the steering asked for (road-wheel deg, + = left; the same measure as
+   *  the run's "opposite lock" summary) */
   steerDeg: 0,
-  throttle: 0,
-  brake: 0,
   /** which way the road turns where the car is (+1 left, −1 right, 0 straight) */
   turnSign: 0,
-  /** where its driver is in the script: 0 before the action, 1 steering held, 2 correcting;
-   *  −1 when the visitor drives it */
-  phase: 0,
   /** its rear has let go (it shows) or it spun: steering out of the turn is catching a slide */
   slid: false,
-  /** car B, the same car without the technique (its wheel is held for the whole test) */
-  twin: false,
-  /** when its part of the test is over (hands.ts testEnd), and whether that was a spin */
-  over: Infinity,
-  overSpun: false,
   /** what the car is called on the road ("911 Carrera S Cabriolet", "No catch") */
   name: '',
-  /** its speed (km/h) */
-  kmh: 0,
-  /** share of the weight on the front axle just before its driver's action (0..1; NaN for none):
-   *  the load arrow over its axles points from there */
-  frontBefore: NaN,
 }));
 
 export const drivePlayback = {
@@ -363,8 +302,4 @@ export function resetTelemetry() {
   drivePlayback.eventT = NaN;
   drivePlayback.key = null;
   drivePlayback.slow = false;
-  for (const c of driveCars) {
-    c.status = 0;
-    c.step = -1;
-  }
 }

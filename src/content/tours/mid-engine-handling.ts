@@ -3,12 +3,12 @@ import type { Tour } from '../types';
 const tour: Tour = {
   id: 'mid-engine-handling',
   question: 'Why does a mid-engine car handle best but leave no room for people?',
-  teaser: 'Mass near the middle turns quickly, and takes the back seat.',
+  teaser: 'Mass near the middle, where the back seats would be.',
   steps: [
     {
       id: 'dumbbell-mr',
       title: 'Mass near the middle',
-      body: 'The dumbbell shows yaw inertia: how hard the car is to spin about its CG. With engine and gearbox inside the wheelbase, the heavy masses sit close to the middle and the dumbbell is short.',
+      body: 'The dumbbell stands for yaw inertia, how hard the car is to turn about its centre of gravity. With engine and gearbox inside the wheelbase, the heavy masses sit close to the middle and the dumbbell is short.',
       scene: {
         view: { vehicleId: 'ferrari-f8-tributo', level: 'internals' },
         overlays: ['inertia', 'cg'],
@@ -17,7 +17,7 @@ const tour: Tour = {
     {
       id: 'dumbbell-fr',
       title: 'Mass at both ends',
-      body: 'Front-engined: the M340i carries its engine ahead of the cabin and its fuel and boot behind. Mass at both ends stretches the dumbbell, so the car needs more yaw moment to turn in.',
+      body: 'Front-engined: the M340i carries its engine ahead of the cabin and its fuel and boot behind. Mass at both ends stretches the dumbbell.',
       scene: {
         view: { vehicleId: 'bmw-m340i-g20', level: 'internals' },
         overlays: ['inertia', 'cg'],
@@ -26,7 +26,7 @@ const tour: Tour = {
     {
       id: 'dumbbell-rr',
       title: 'Mass at one end',
-      body: 'Rear-engined: the 911’s flat-6 hangs out past the rear axle, far from the CG. Compare the dumbbell with the Ferrari’s.',
+      body: 'Rear-engined: the flat-6 of the 911 hangs out past the rear axle, far from the centre of gravity, and the dumbbell is longer than the Ferrari one.',
       scene: {
         view: { vehicleId: 'porsche-911-992', level: 'internals' },
         overlays: ['inertia', 'cg'],
@@ -35,16 +35,16 @@ const tour: Tour = {
     {
       id: 'lane-change',
       title: 'Quick to change direction',
-      body: 'In the same scripted lane change, watch which car takes its new heading first. Lower yaw inertia means the same tyre forces rotate the car sooner.',
+      body: 'The same step of the wheel: the mid-engined car builds its turn sooner than the 911, whose yaw inertia for its size is larger.',
       scene: {
         view: { vehicleId: 'ferrari-f8-tributo', level: 'drive' },
-        drive: { scenario: 'lane-change', ghosts: ['bmw-m340i-g20', 'porsche-911-992'] },
+        drive: { scenario: 'lane-change', ghosts: ['porsche-911-992'] },
       },
     },
     {
       id: 'no-seats',
       title: 'The price: space',
-      body: 'The floor plan shows the cost. The engine occupies the space where rear seats would go: two seats, a small front boot, and the engine’s heat and noise right behind your head.',
+      body: 'The floor plan from above: the engine occupies the space where rear seats would go, leaving two seats and a small front boot.',
       scene: {
         view: { vehicleId: 'ferrari-f8-tributo', level: 'internals' },
         overlays: ['floorplan'],
@@ -53,8 +53,8 @@ const tour: Tour = {
     },
     {
       id: 'lift-off',
-      title: 'Quick to let go, too',
-      body: 'Low inertia cuts both ways. Lift off mid-corner and watch the yaw rate: once the rear tyres slide, the mid-engined car also rotates sooner, so it gives the driver less time to catch it.',
+      title: 'Lift off: the tail goes',
+      body: 'Lifting mid-corner takes load off the rear tyres: the rear of the mid-engined car slides out and it spins, while the front-engined car only tightens its line.',
       scene: {
         view: { vehicleId: 'ferrari-f8-tributo', level: 'drive' },
         drive: { scenario: 'lift-off', ghosts: ['bmw-m340i-g20'] },

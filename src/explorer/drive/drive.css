@@ -20,11 +20,6 @@
   width: 100%;
   height: 100%;
 }
-/* catching a slide: the steering is the technique, so the wheel is drawn larger */
-.apx-drive-carlabel.is-steer .apx-drive-hands__wheel {
-  width: 22px;
-  height: 22px;
-}
 /* opposite lock: in the colour of the arrow on the front wheels */
 .apx-drive-hands__wheel.is-lock {
   color: var(--steer);
@@ -75,29 +70,6 @@
 .apx-drive-pedal.is-lift .apx-drive-pedal__lift {
   display: block;
 }
-/* an input as it changes: a ring that spreads from it */
-.apx-drive-pedal::after {
-  content: '';
-  position: absolute;
-  inset: -3px;
-  border: 2px solid var(--sys, var(--accent));
-  border-radius: 4px;
-  opacity: 0;
-  pointer-events: none;
-}
-.apx-drive-pedal.is-pulse::after {
-  animation: apx-drive-pulse 0.9s ease-out 2;
-}
-@keyframes apx-drive-pulse {
-  from {
-    opacity: 1;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 0;
-    transform: scale(2.4);
-  }
-}
 
 /* ── the cars' tags on the road ─────────────────────────────────────────── */
 .apx-drive-carlabel {
@@ -121,29 +93,8 @@
   padding-left: 6px;
   border-left: 1px solid var(--line-strong);
 }
-.apx-drive-carlabel__kmh {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font: 600 11.5px/1 var(--mono);
-  color: var(--text);
-}
-/* braking into a turn beside the same car at its speed: the speeds linked, one copied */
-.apx-drive-chain {
-  width: 13px;
-  height: 13px;
-  color: var(--text-muted);
-}
 .apx-drive-carlabel.is-twin {
   border-style: dashed;
-}
-/* catching a slide: through the key moment, the steering wheel large */
-.apx-drive-carlabel.is-big .apx-drive-hands__wheel {
-  width: 40px;
-  height: 40px;
-}
-.apx-drive-carlabel.is-big .apx-drive-hands {
-  align-items: center;
 }
 .apx-drive-carlabel__out {
   font-weight: 750;
@@ -451,10 +402,6 @@
   flex-basis: 16px;
   height: 16px;
   margin: 0 7px;
-}
-.apx-drive-legend__glyph .apx-drive-chain {
-  width: 16px;
-  height: 16px;
 }
 
 /* the layout sketch: engine and motors in their colours, the centre of mass, driven wheels */
@@ -961,7 +908,6 @@
   .apx-drive-end,
   .apx-drive-info__actions,
   .apx-drive-every li,
-  .apx-drive-pedal.is-pulse::after,
   .apx-drive-iconbtn.is-cue {
     animation: none;
   }

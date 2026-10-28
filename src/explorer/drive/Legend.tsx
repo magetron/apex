@@ -11,13 +11,12 @@ import { create } from 'zustand';
 import { SYSTEM_COLORS } from '../../scene/palette';
 import { useTheme } from '../../scene/theme';
 import { DRIVE_COLORS } from './colors';
-import { InputGlyph, MAGNIFIER, WHEEL } from './glyphs';
+import { InputGlyph, MAGNIFIER, movesLoad, WHEEL } from './glyphs';
 import { useDrive } from './state';
 import { MATCHED } from './takeaway';
 
 export const useLegend = create<{ open: boolean }>()(() => ({ open: false }));
 
-export const openLegend = () => useLegend.setState({ open: true });
 export const closeLegend = () => useLegend.setState({ open: false });
 export const toggleLegend = () => useLegend.setState({ open: !useLegend.getState().open });
 
@@ -88,6 +87,8 @@ export function Legend() {
   // a question's own marks, only there: braking into a turn, the path without the brake
   const unbraked = MATCHED.includes(scenario);
   const catching = scenario === 'catch';
+  // watched from the side round the key moment: the line each body pitches against
+  const level = movesLoad(scenario);
   return createPortal(
     <div
       ref={root}
@@ -125,6 +126,15 @@ export function Legend() {
           </svg>
           engine
         </li>
+        {level && (
+          <li>
+            <svg {...svg} fill="none" strokeLinejoin="round">
+              <path d="M2 5H28" stroke="currentColor" strokeWidth={1.6} />
+              <path d="M5 8 25 11V16H5Z" stroke="currentColor" strokeWidth={1.2} opacity={0.6} />
+            </svg>
+            level
+          </li>
+        )}
         <li>
           <svg {...svg} fill="none">
             <path d="M2 10H28" stroke="currentColor" strokeWidth={1.6} strokeDasharray="2 2" />

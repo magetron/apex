@@ -62,8 +62,6 @@ export function RivalCar(props: {
   lane: Lane;
   vehicle: VehicleSpec;
   color: string;
-  /** its tint's opacity (DetailedCar) */
-  ghost?: number;
   /** its front wheels' steering drawn this many times larger (catching a slide) */
   steerScale?: number;
 }) {
@@ -92,7 +90,6 @@ function ShellCar({
   lane: Lane;
   vehicle: VehicleSpec;
   color: string;
-  ghost?: number;
   steerScale?: number;
 }) {
   const group = useRef<Group>(null);

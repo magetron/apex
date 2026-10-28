@@ -8,7 +8,7 @@ const tour: Tour = {
     {
       id: 'one-unit',
       title: 'One compact unit',
-      body: 'Engine and gearbox sit side by side across the car, ahead of the front wheels, with the differential inside the gearbox. No prop shaft and no rear differential to package or pay for.',
+      body: 'Engine and gearbox sit side by side across the nose, with the differential inside the gearbox: no prop shaft and no rear differential to package or pay for.',
       scene: {
         view: { vehicleId: 'vw-golf-gti-mk8', level: 'internals' },
         explode: 0.5,
@@ -18,7 +18,7 @@ const tour: Tour = {
     {
       id: 'cabin',
       title: 'The payoff: space',
-      body: 'The floor plan shows why: the whole drivetrain lives in the nose, so the rest of the length goes to people and luggage.',
+      body: 'The floor plan from above: the whole drivetrain lives in the nose, so the rest of the length goes to people and luggage.',
       scene: {
         view: { vehicleId: 'vw-golf-gti-mk8', level: 'internals' },
         overlays: ['floorplan'],
@@ -28,7 +28,7 @@ const tour: Tour = {
     {
       id: 'weight-on-drive',
       title: 'Weight on the driven wheels',
-      body: 'Torque flows straight out to the front wheels, and the axle-load bars show they also carry most of the weight. That helps traction in snow and at part throttle.',
+      body: 'Torque flows straight out to the front wheels, and the axle-load bars show they also carry most of the weight.',
       scene: {
         view: { vehicleId: 'vw-golf-gti-mk8', level: 'internals' },
         overlays: ['torque-flow', 'axle-loads'],
@@ -37,25 +37,26 @@ const tour: Tour = {
     {
       id: 'power-understeer',
       title: 'Limit: power understeer',
-      body: 'The front tyres must steer and drive. Accelerating out of a corner, load moves rearward and the fronts run out of grip first, so the car runs wide. Watch the front friction circles against the rear-drive ghost.',
+      body: 'The front tyres must steer and drive. On the throttle out of a turn the Golf pushes its front wide, while the rear-drive car slides its rear out.',
       scene: {
         view: { vehicleId: 'vw-golf-gti-mk8', level: 'drive' },
         drive: { scenario: 'power-exit', ghosts: ['bmw-m340i-g20'] },
       },
     },
     {
-      id: 'torque-steer',
-      title: 'Limit: torque steer',
-      body: 'Zoom into the differential: it sits off-centre, so the half shafts reach the wheels at different lengths and angles. Under hard throttle that imbalance can tug the steering; the GTI adds an electronically controlled locking differential to limit wheelspin.',
+      id: 'half-shafts',
+      title: 'Half shafts of unequal length',
+      body: 'The differential sits off-centre in the gearbox, so the half shafts reach the wheels at different lengths and angles: under hard throttle that imbalance can tug the steering (torque steer).',
       scene: {
-        view: { vehicleId: 'vw-golf-gti-mk8', level: 'part', part: 'diff-front' },
-        highlight: ['half-front-left', 'half-front-right'],
+        view: { vehicleId: 'vw-golf-gti-mk8', level: 'internals' },
+        highlight: ['diff-front', 'half-front-left', 'half-front-right'],
+        camera: 'top',
       },
     },
     {
       id: 'golf-r',
-      title: 'Golf R: same body, more hardware',
-      body: 'The Golf R keeps the same transverse engine and adds a prop shaft and a clutch-controlled rear drive unit. Extra weight and cost buy traction the front tyres alone cannot give. Compare the axle loads.',
+      title: 'Golf R adds rear drive',
+      body: 'The Golf R keeps the same transverse engine and adds a prop shaft and a clutch-controlled rear drive unit: extra weight and cost buy traction the front tyres alone cannot give.',
       scene: {
         view: { vehicleId: 'vw-golf-r-mk8', level: 'internals' },
         highlight: ['prop-rear', 'coupling', 'diff-rear'],

@@ -7,9 +7,6 @@
 
 export const BUDGET = 25;
 
-/** A speed as the cars' tags say it. */
-export const speedText = (kmh: number) => `${Math.round(kmh)} km/h`;
-
 const ENTITIES: Record<string, string> = {
   amp: '&',
   lt: '<',

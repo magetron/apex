@@ -2,8 +2,7 @@
  * The two cars as they really look, each picked out by a rim in its colour:
  *  - DetailedRival: the comparison car from its own detailed model (the explorer's glTF body and
  *    wheels, read-only here) in one violet tint (its own paint could be red, and red means only
- *    an end that let go): a see-through ghost when it shares car A's lane, nearly solid a lane
- *    over. Driven by its lane: placed, turned, rolled and pitched like the visitor's car (a
+ *    an end that let go): a see-through ghost over car A's own line. Driven by its lane: placed, turned, rolled and pitched like the visitor's car (a
  *    stop's nose dive drawn deeper, as the card says), its wheels turning and steering. A violet
  *    rim round it too.
  *  - PoseRim: the same rim round the visitor's own car, following the explorer's pose, so a
@@ -296,15 +295,12 @@ function RivalModel({
   lane,
   vehicle,
   color,
-  ghost,
   steerScale,
 }: {
   lane: Lane;
   vehicle: VehicleSpec;
   color: string;
   steerScale: number;
-  /** how see-through its single tint is (the same lane: a ghost over car A's road) */
-  ghost: number;
 }) {
   const model = useCarModel(vehicle.id);
   const mat = useMemo(
@@ -314,10 +310,10 @@ function RivalModel({
         roughness: 0.55,
         metalness: 0.1,
         transparent: true,
-        opacity: ghost,
+        opacity: GHOST,
         depthWrite: false,
       }),
-    [color, ghost],
+    [color],
   );
   useEffect(() => () => mat.dispose(), [mat]);
   const wheels = useModelWheels(model, mat);
@@ -339,7 +335,7 @@ function RivalModel({
     g.rotation.set(0, st.yaw, 0);
     // faded out while it is (nearly) on car A (Lane.drawn): its depth-only copies go with it
     g.visible = lane.drawn > FADED;
-    mat.opacity = ghost * lane.drawn;
+    mat.opacity = GHOST * lane.drawn;
     // the sprung body only, about a pivot at axle height, as the explorer does
     sprung.current?.rotation.set(st.roll, 0, shownPitch(st.pitch), 'YXZ');
     const turned = road.update(pt.x, pt.z, st.yaw, R);
@@ -394,7 +390,6 @@ export function DetailedRival({
   lane,
   vehicle,
   color,
-  ghost = GHOST_SAME_LANE,
   steerScale = 1,
   fallback,
 }: {
@@ -403,27 +398,18 @@ export function DetailedRival({
   color: string;
   /** its front wheels' steering drawn this many times larger */
   steerScale?: number;
-  /** its tint's opacity: see-through in car A's own lane, nearly solid a lane over */
-  ghost?: number;
   fallback: ReactNode;
 }) {
   if (!hasDetailed(vehicle)) return <>{fallback}</>;
   return (
     <Guard key={vehicle.id} fallback={fallback}>
-      <RivalModel
-        lane={lane}
-        vehicle={vehicle}
-        color={color}
-        ghost={ghost}
-        steerScale={steerScale}
-      />
+      <RivalModel lane={lane} vehicle={vehicle} color={color} steerScale={steerScale} />
     </Guard>
   );
 }
 
-/** the comparison car's tint: a ghost in car A's lane, nearly solid a lane over */
-export const GHOST_SAME_LANE = 0.38;
-export const GHOST_SIDE_LANE = 0.9;
+/** the comparison car's tint: a see-through ghost over car A's own line */
+const GHOST = 0.38;
 
 // ── the visitor's car ──────────────────────────────────────────────────────────────────────
 

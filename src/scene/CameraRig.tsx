@@ -2,7 +2,6 @@ import { CameraControls } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
 import { Box3, Matrix4, Vector3, type InstancedMesh, type Mesh, type Object3D } from 'three';
-import type { Vec3 } from '../spec/types';
 import { useScene, type Controls } from './store';
 
 /** Explicit shots are framed for a ~16:9 view; narrower (portrait/phone) views back off. */
@@ -47,17 +46,6 @@ export function CameraRig() {
       dollySpeed={0.5}
     />
   );
-}
-
-/** Ask the rig for an explicit shot whenever the values change. */
-export function useCameraShot(position: Vec3, target: Vec3, animate = true) {
-  const shoot = useScene((s) => s.shoot);
-  const key = [...position, ...target].join(',');
-  useEffect(() => {
-    shoot({ position, target, animate });
-    // position/target are captured via key
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, animate, shoot]);
 }
 
 export interface FrameOptions {
